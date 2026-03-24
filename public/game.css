@@ -1,0 +1,273 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: #111;
+  overflow: hidden;
+}
+
+canvas {
+  display: block;
+}
+
+#connection-status {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  padding: 6px 12px;
+  border-radius: 5px;
+  font-family: monospace;
+  font-size: 13px;
+  z-index: 20;
+}
+
+.connected {
+  background: #27ae60;
+  color: #fff;
+}
+
+.disconnected {
+  background: #c0392b;
+  color: #fff;
+}
+
+/* ── HUD ─────────────────────────────────────── */
+#hud {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 24px;
+  background: rgba(0, 0, 0, 0.65);
+  font-family: monospace;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.team-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.team-name {
+  font-size: 12px;
+  color: #aaa;
+}
+
+.team-score {
+  font-size: 38px;
+  font-weight: bold;
+}
+
+.team-players {
+  font-size: 11px;
+  color: #777;
+  max-width: 200px;
+  text-align: center;
+}
+
+#team-a .team-score {
+  color: #3498db;
+}
+
+#team-b .team-score {
+  color: #e74c3c;
+}
+
+#timer {
+  font-size: 42px;
+  font-weight: bold;
+  color: #fff;
+  font-family: monospace;
+}
+
+#timer.danger {
+  color: #e74c3c;
+  animation: pulse .5s infinite alternate;
+}
+
+@keyframes pulse {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0.5;
+  }
+}
+
+/* ── LOBBY ───────────────────────────────────── */
+#lobby-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 12, 25, 0.96);
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 30px;
+  z-index: 30;
+  font-family: monospace;
+}
+
+#lobby-overlay h2 {
+  font-size: 2.4em;
+  color: #FFD700;
+  letter-spacing: 3px;
+}
+
+#lobby-count {
+  font-size: 0.9em;
+  color: #666;
+}
+
+.lobby-teams {
+  display: flex;
+  gap: 40px;
+}
+
+.lobby-team-block {
+  width: 200px;
+}
+
+.lobby-team-title {
+  font-size: 1em;
+  font-weight: bold;
+  margin-bottom: 10px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+#lobby-title-a {
+  background: rgba(52, 152, 219, 0.25);
+  color: #3498db;
+}
+
+#lobby-title-b {
+  background: rgba(231, 76, 60, 0.25);
+  color: #e74c3c;
+}
+
+#lobby-team-a,
+#lobby-team-b {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 60px;
+}
+
+.lobby-player {
+  font-size: 0.95em;
+  color: #ddd;
+  padding: 4px 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 6px;
+}
+
+.lobby-empty {
+  font-size: 0.85em;
+  color: #444;
+  padding: 4px 8px;
+}
+
+.lobby-hint {
+  font-size: 0.8em;
+  color: #555;
+  text-align: center;
+}
+
+#lobby-qr-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-top: -10px;
+  margin-bottom: 5px;
+}
+
+#lobby-qr-code {
+  width: 130px;
+  height: 130px;
+  border-radius: 8px;
+  border: 4px solid #fff;
+}
+
+#lobby-url-text {
+  font-size: 0.9em;
+  color: #FFD700;
+  font-weight: bold;
+  background: rgba(255, 215, 0, 0.1);
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+
+/* ── FIN DE PARTIE ───────────────────────────── */
+#end-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 20px;
+  z-index: 50;
+}
+
+#end-winner {
+  font-size: 2.6em;
+  color: #fff;
+  font-family: monospace;
+}
+
+.final-scores {
+  display: flex;
+  gap: 50px;
+  font-family: monospace;
+}
+
+.final-score-block {
+  text-align: center;
+}
+
+.final-score-block span:first-child {
+  display: block;
+  font-size: 13px;
+  color: #aaa;
+  margin-bottom: 4px;
+}
+
+.final-score-block span:last-child {
+  display: block;
+  font-size: 52px;
+  font-weight: bold;
+}
+
+#final-a {
+  color: #3498db;
+}
+
+#final-b {
+  color: #e74c3c;
+}
+
+#restart-btn {
+  font-size: 1.1em;
+  padding: 14px 36px;
+  background: #FFD700;
+  color: #000;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-family: monospace;
+  font-weight: bold;
+}

@@ -278,6 +278,37 @@
       font-family: monospace;
       font-weight: bold;
     }
+
+    /* ── QR IN-GAME ──────────────────────────────── */
+    #ingame-qr {
+      display: none;
+      position: fixed;
+      bottom: 16px;
+      right: 16px;
+      background: rgba(10, 12, 25, 0.85);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 12px;
+      padding: 10px 12px;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      z-index: 15;
+      pointer-events: none;
+    }
+
+    #ingame-qr-label {
+      font-family: monospace;
+      font-size: 10px;
+      color: #aaa;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    #ingame-qr-code {
+      background: #fff;
+      padding: 5px;
+      border-radius: 6px;
+    }
   </style>
 </head>
 
@@ -327,6 +358,12 @@
       </div>
     </div>
     <div class="lobby-hint">Le host (👑) peut lancer la partie depuis son téléphone</div>
+  </div>
+
+  <!-- QR code in-game (coin bas-droite) -->
+  <div id="ingame-qr">
+    <div id="ingame-qr-label">📱 Rejoindre</div>
+    <div id="ingame-qr-code"></div>
   </div>
 
   <!-- Fin de partie -->

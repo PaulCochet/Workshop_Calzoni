@@ -8,7 +8,7 @@ window._p5play_intro_image = '';
 const PLAYER_RADIUS = 20;
 const PLAYER_SPEED = 6.0;
 const STUN_DURATION = 3;
-const GAME_DURATION = 60;
+const GAME_DURATION = 120;
 const FRISBEE_SPEED = 24;
 const FRISBEE_RADIUS = 12;
 const THROW_COOLDOWN = 0.6;
@@ -49,6 +49,7 @@ function connectWebSocket() {
     else if (msg.type === 'throw') handleThrow(msg);
     else if (msg.type === 'grab') handleGrab(msg);
     else if (msg.type === 'startGame') startGame();
+    else if (msg.type === 'getState') handleGetState();
   };
 }
 
@@ -68,7 +69,13 @@ function setConnectionStatus(text, ok) {
 function handleSpawn(msg) {
   if (players[msg.pseudo]) return;
   spawnPlayer(msg.pseudo, msg.team, msg.isHost);
-  broadcastLobbyState();
+  if (gamePhase === 'playing') {
+    // Late join: place the player on the map immediately and notify them
+    placePlayerOnMap(players[msg.pseudo]);
+    broadcast({ type: 'gameStarted' });
+  } else {
+    broadcastLobbyState();
+  }
 }
 
 function handleMove(msg) {
@@ -145,6 +152,13 @@ function updateLobbyUI() {
   if (lobbyB) lobbyB.innerHTML = listB.map(n => `<div class="lobby-player">🔴 ${escapeHtml(n)}</div>`).join('') || '<div class="lobby-empty">—</div>';
   const count = document.getElementById('lobby-count');
   if (count) count.textContent = `${Object.keys(players).length} joueur(s) connecté(s)`;
+}
+
+function handleGetState() {
+  // Respond to a controller that just connected mid-game
+  if (gamePhase === 'playing') {
+    broadcast({ type: 'gameStarted' });
+  }
 }
 
 function startGame() {
@@ -225,8 +239,8 @@ function createFrisbee() {
   frisbee.color = color(255, 220, 50); frisbee.stroke = color(200, 160, 0);
   frisbee.strokeWeight = 2; frisbee.bounciness = 0.55;
   frisbee.friction = 0.04; frisbee.mass = 0.3; frisbee.rotationLock = false;
-  
-  frisbee.draw = function() {
+
+  frisbee.draw = function () {
     push();
     fill(255, 220, 50); stroke(200, 160, 0); strokeWeight(2);
     circle(0, 0, FRISBEE_RADIUS * 2);
@@ -376,11 +390,11 @@ function setup() {
       // On utilise l'IP locale (data.ip) pour que les potes puissent se connecter
       const controllerUrl = `http://${data.ip}:${data.port}/controller`;
       document.getElementById('lobby-url-text').textContent = controllerUrl;
-      
+
       const qrContainer = document.getElementById('lobby-qr-container');
       const oldImg = document.getElementById('lobby-qr-code');
       if (oldImg) oldImg.remove();
-      
+
       const qrDiv = document.createElement('div');
       qrDiv.id = 'lobby-qr-code';
       qrDiv.style.background = 'white';
@@ -388,15 +402,15 @@ function setup() {
       qrDiv.style.borderRadius = '8px';
       qrDiv.style.display = 'inline-block';
       qrContainer.insertBefore(qrDiv, document.getElementById('lobby-url-text'));
-      
+
       // Génération locale garantie 100% sans bug d'API
       new QRCode(qrDiv, {
         text: controllerUrl,
         width: 140,
         height: 140,
-        colorDark : "#000000",
-        colorLight : "#ffffff",
-        correctLevel : QRCode.CorrectLevel.L
+        colorDark: "#000000",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.L
       });
     })
     .catch(console.error);

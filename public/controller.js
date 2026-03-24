@@ -56,7 +56,7 @@ function connectWebSocket() {
     let msg; try { msg = JSON.parse(event.data); } catch (e) { return; }
 
     if (msg.type === 'lobbyState')   updateLobbyDisplay(msg.players);
-    if (msg.type === 'gameStarted')  enterGame();
+    if (msg.type === 'gameStarted' && !gameStarted && pseudo && team) enterGame();
     if (msg.type === 'returnToLobby') returnToLobby();
 
     if (msg.type === 'hasFrisbee' && msg.pseudo === pseudo) {

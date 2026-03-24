@@ -169,6 +169,7 @@ function startGame() {
 
   document.getElementById('lobby-overlay').style.display = 'none';
   document.getElementById('hud').style.display = 'flex';
+  showIngameQR();
 
   for (const pseudo in players) placePlayerOnMap(players[pseudo]);
 
@@ -180,6 +181,29 @@ function startGame() {
 
   broadcast({ type: 'gameStarted' });
   updateScoreboard();
+}
+
+function showIngameQR() {
+  const el = document.getElementById('ingame-qr');
+  const container = document.getElementById('ingame-qr-code');
+  if (!el || !container) return;
+  // Only generate once
+  if (container.childElementCount > 0) { el.style.display = 'flex'; return; }
+  fetch('/api/ip')
+    .then(r => r.json())
+    .then(data => {
+      const url = `http://${data.ip}:${data.port}/controller`;
+      new QRCode(container, {
+        text: url,
+        width: 80,
+        height: 80,
+        colorDark: '#000000',
+        colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.L
+      });
+      el.style.display = 'flex';
+    })
+    .catch(console.error);
 }
 
 function placePlayerOnMap(p) {
@@ -535,6 +559,7 @@ function showEndScreen() {
     document.getElementById('end-overlay').style.display = 'none';
     document.getElementById('lobby-overlay').style.display = 'flex';
     document.getElementById('hud').style.display = 'none';
+    document.getElementById('ingame-qr').style.display = 'none';
     gamePhase = 'lobby'; scoreA = scoreB = 0; gameTimer = GAME_DURATION;
     for (const p in players) removePlayer(p);
     frisbee.x = width / 2; frisbee.y = height / 2;

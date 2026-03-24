@@ -1,0 +1,205 @@
+/* ── VARIABLES DE STYLE ── */
+:root {
+  --yellow:     #faed36;
+  --black:      #181a00;
+  --white:      #fefce1;
+  --shadows:    #2f3300;
+  --font-title: 'Boldonse', serif;
+  --font-body:  'Inter', sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: var(--font-title);
+  background: #0d0d1a;
+  color: #fff;
+  position: fixed; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 10px;
+  -webkit-user-select: none; user-select: none;
+  overflow: hidden;
+  touch-action: none;
+}
+
+/* Écrans de navigation cachent titre quand en jeu */
+body.in-game h1,
+body.in-game .subtitle,
+body.in-game .status { display: none !important; }
+
+h1 { font-size: 1.5em; color: var(--yellow); letter-spacing: 0.125rem; margin-bottom: 4px; }
+.subtitle { font-family: var(--font-body); font-size: 0.8em; color: #555; margin-bottom: 16px; }
+.status   { font-family: var(--font-body); font-size: 0.8em; padding: 4px 10px; border-radius: 4px; margin-bottom: 12px; }
+.connected    { background: #27ae60; color: #fff; }
+.disconnected { background: #c0392b; color: #fff; }
+
+/* ── BOUTON FULLSCREEN ── */
+#fullscreen-btn {
+  position: absolute;
+  top: 0.75rem; right: 0.75rem;
+  background: rgba(255,255,255,0.1);
+  border: 0.0625rem solid rgba(255,255,255,0.2);
+  color: #fff;
+  border-radius: 0.5rem;
+  width: 3rem; height: 3rem;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.5em;
+  cursor: pointer;
+  z-index: 1000;
+}
+
+/* ── PORTRAIT OVERLAY ── */
+#portrait-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: var(--black);
+  z-index: 9999;
+  align-items: center; justify-content: center;
+  text-align: center; flex-direction: column;
+  padding: 1.25rem;
+}
+#portrait-overlay span { font-size: 4em; margin-bottom: 1.25rem; }
+#portrait-overlay p   { font-family: var(--font-body); font-size: 1.2em; font-weight: bold; color: #fff; }
+
+@media (orientation: portrait) {
+  #portrait-overlay { display: flex; }
+  body > *:not(#portrait-overlay) { display: none !important; }
+}
+
+/* Rotation Overlay (fallback legacy - conservé pour compatibilité JS) */
+#rotate-overlay { display: none; position: fixed; inset: 0; background: #0d0d1a; z-index: 9998; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; font-size: 1.4em; }
+#force-landscape-btn { margin-top: 20px; padding: 12px 18px; border-radius: 10px; border: none; background: #444; color: #fff; font-size: 0.7em; cursor: pointer; }
+
+/* ── ÉCRAN LOGIN ── */
+#login-screen { display: flex; flex-direction: column; align-items: center; gap: 0.75rem; width: 100%; max-width: 20rem; }
+input[type="text"] {
+  font-family: var(--font-body);
+  font-size: 1.1em; padding: 0.875rem 1.125rem;
+  border: 0.125rem solid var(--yellow); border-radius: 0.75rem;
+  background: #1a1a2e; color: #fff; text-align: center; width: 100%; outline: none;
+}
+.btn-primary {
+  font-family: var(--font-body);
+  width: 100%; padding: 1rem;
+  background: var(--yellow); color: var(--black);
+  font-size: 1.1em; font-weight: 700;
+  border: none; border-radius: 0.75rem;
+  cursor: pointer; touch-action: manipulation;
+}
+
+/* ── ÉCRAN ÉQUIPE ── */
+#team-screen { display: none; flex-direction: column; align-items: center; gap: 1rem; width: 100%; max-width: 20rem; }
+#team-screen p { font-family: var(--font-body); color: #aaa; font-size: 0.9em; }
+.team-btns { display: flex; gap: 0.875rem; width: 100%; }
+.btn-team { flex: 1; padding: 1.625rem 0.625rem; font-size: 1.4em; font-weight: bold; border: none; border-radius: 0.875rem; cursor: pointer; touch-action: manipulation; }
+#btn-team-a { background: #3498db; color: #fff; }
+#btn-team-b { background: #e74c3c; color: #fff; }
+.host-option { font-family: var(--font-body); display: flex; align-items: center; gap: 0.5rem; font-size: 0.85em; color: #aaa; cursor: pointer; }
+.host-option input { width: 1.125rem; height: 1.125rem; cursor: pointer; }
+
+/* ── ÉCRAN LOBBY ── */
+#lobby-screen { display: none; flex-direction: column; align-items: center; gap: 0.875rem; width: 100%; max-width: 21.25rem; }
+#lobby-pseudo { font-family: var(--font-body); font-size: 0.9em; color: #aaa; }
+#lobby-player-count { font-family: var(--font-body); font-size: 0.8em; color: #555; }
+.lobby-teams-ctrl { display: flex; gap: 1.25rem; width: 100%; }
+.lobby-team-col { flex: 1; }
+.lobby-team-label { font-size: 0.8em; font-weight: bold; margin-bottom: 0.375rem; padding: 0.25rem 0.5rem; border-radius: 0.375rem; text-align: center; }
+.label-a { background: rgba(52,152,219,0.2); color: #3498db; }
+.label-b { background: rgba(231,76,60,0.2);  color: #e74c3c; }
+#lobby-list-a, #lobby-list-b { display: flex; flex-direction: column; gap: 0.25rem; min-height: 2.5rem; }
+.lobby-entry { font-family: var(--font-body); font-size: 0.85em; color: #ccc; padding: 0.25rem 0.5rem; background: rgba(255,255,255,0.05); border-radius: 0.375rem; }
+.lobby-empty { font-family: var(--font-body); font-size: 0.8em; color: #444; padding: 0.25rem 0.5rem; }
+#start-btn-wrapper { display: none; width: 100%; }
+#start-game-btn { font-family: var(--font-body); width: 100%; padding: 1.125rem; background: #27ae60; color: #fff; font-size: 1.2em; font-weight: bold; border: none; border-radius: 0.875rem; cursor: pointer; touch-action: manipulation; }
+.lobby-waiting { font-family: var(--font-body); font-size: 0.8em; color: #444; text-align: center; }
+
+/* ── ÉCRAN CONTRÔLE ── */
+#control-screen {
+  display: none;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-around;
+  width: 100%; height: 100%;
+  padding: 1rem 2rem;
+  gap: 1.5rem;
+  background: var(--yellow);
+}
+
+/* ── JOYSTICK (style UI équipe) ── */
+#joystick-zone {
+  width: 10.625rem; height: 10.625rem;
+  border-radius: 1.5rem;
+  background: #B6AD25;
+  border: none;
+  box-shadow: 0 0.5rem 0 #8a8300;
+  position: relative; touch-action: none; flex-shrink: 0;
+}
+#joystick-knob {
+  width: 3.75rem; height: 3.75rem;
+  border-radius: 50%;
+  background: var(--yellow);
+  box-shadow: 0 0.375rem 0.75rem rgba(24,26,0,0.25);
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%,-50%);
+  pointer-events: none;
+}
+
+/* ── BOUTON ACTION UNIQUE ── */
+#action-btn {
+  width: 10.625rem; height: 10.625rem;
+  border-radius: 1.5rem;
+  border: none;
+  cursor: pointer;
+  touch-action: manipulation;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-family: var(--font-title);
+  font-size: 1.5rem;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  transition: transform 0.08s, box-shadow 0.08s;
+  flex-shrink: 0;
+}
+#action-btn:active {
+  transform: translateY(0.35rem);
+  box-shadow: 0 0.15rem 0 var(--shadows) !important;
+}
+
+/* État POUSSER (sans boomerang) */
+#action-btn.mode-push {
+  background: var(--black);
+  color: var(--yellow);
+  box-shadow: 0 0.5rem 0 var(--shadows);
+}
+
+/* État LANCER (avec boomerang) */
+#action-btn.mode-throw {
+  background: var(--black);
+  color: var(--yellow);
+  box-shadow: 0 0.5rem 0 var(--shadows);
+}
+
+/* Icônes : une seule visible à la fois */
+.btn-icon { width: 5rem; height: auto; display: none; }
+#action-btn.mode-throw .icon-throw { display: block; }
+#action-btn.mode-push  .icon-push  { display: block; }
+.btn-label { line-height: 1; }
+
+/* Étourdi = bouton grisé */
+#action-btn.mode-stunned {
+  background: #333;
+  color: #666;
+  box-shadow: 0 0.2rem 0 #111;
+  pointer-events: none;
+}
+
+/* ── FEEDBACK / OVERLAYS ── */
+#grab-feedback { display: none; font-family: var(--font-body); font-size: 0.85em; color: #e74c3c; font-weight: bold; text-align: center; }
+
+#stun-overlay { display: none; position: fixed; inset: 0; background: rgba(243,156,18,0.35); align-items: center; justify-content: center; flex-direction: column; gap: 8px; z-index: 100; pointer-events: none; }
+#stun-overlay span:first-child { font-size: 4em; }
+#stun-overlay span:last-child  { font-family: var(--font-body); font-size: 1.3em; color: #f39c12; font-weight: bold; }

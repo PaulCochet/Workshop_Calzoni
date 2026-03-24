@@ -16,9 +16,19 @@
 }
 
 body {
+  /* --- TYPOGRAPHIE --- */
   font-family: var(--font-title);
-  background: #0d0d1a;
-  color: #fff;
+  color: var(--black);
+  line-height: 1.6;
+
+  /* --- BACKROUND (LE FOND) --- */
+  /* On regroupe tout ce qui touche au fond ensemble */
+  background: url('pattern.svg'), var(--yellow);
+  background-repeat: repeat;
+  background-size: 80px;
+  background-attachment: fixed;
+  /* Petit bonus pour que le fond reste fixe au scroll */
+
   position: fixed;
   inset: 0;
   display: flex;

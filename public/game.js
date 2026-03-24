@@ -16,6 +16,7 @@ const FRISBEE_FRICTION = 0.98; // Frottement dans l'air pendant 4s
 const GRAB_RADIUS = 55;
 const GRAB_DURATION = 2;
 const MIRE_SPEED = 4.5;
+const KNOCKBACK_FORCE = 16; // Impulsion de recul quand on est attrapé
 
 const COLOR_TEAM_A = [52, 152, 219];
 const COLOR_TEAM_B = [231, 76, 60];
@@ -127,8 +128,14 @@ function handleGrab(msg) {
     target.grabTimer = GRAB_DURATION;
     target.grabbedBy = msg.pseudo;
     target.inputDir = { x: 0, y: 0 };
-    target.sprite.vel.x = 0;
-    target.sprite.vel.y = 0;
+
+    // Calcul du vecteur de recul (direction opposée au grabber)
+    const dx = target.sprite.x - grabber.sprite.x;
+    const dy = target.sprite.y - grabber.sprite.y;
+    const dist = Math.hypot(dx, dy) || 1;
+    target.sprite.vel.x = (dx / dist) * KNOCKBACK_FORCE;
+    target.sprite.vel.y = (dy / dist) * KNOCKBACK_FORCE;
+
     if (frisbeeOwner === closest) { frisbeeOwner = null; frisbee.collider = 'dynamic'; broadcast({ type: 'frisbeeDropped' }); }
     broadcast({ type: 'grabbed', pseudo: closest, by: msg.pseudo });
   }
@@ -470,7 +477,9 @@ function draw() {
     } else if (p.grabbed) {
       p.grabTimer -= dt;
       if (p.grabTimer <= 0) { p.grabbed = false; p.grabbedBy = null; broadcast({ type: 'released', pseudo }); }
-      p.sprite.vel.x *= 0.5; p.sprite.vel.y *= 0.5;
+      // Amortissement doux : laisse le knockback se dissiper naturellement
+      p.sprite.vel.x *= 0.88;
+      p.sprite.vel.y *= 0.88;
     } else {
       // Simulate aiming angle
       p.mireAngle += MIRE_SPEED * dt;

@@ -29,6 +29,8 @@ let hasFrisbee  = false;
 let isStunned   = false;
 let isGrabbed   = false;
 let gameStarted = false;
+let grabCooldown = false;
+let grabCooldownInterval = null;
 
 // Joystick
 let joystickActive = false;
@@ -239,7 +241,9 @@ document.getElementById('action-btn').addEventListener('touchstart', (e) => {
     send({ type: 'throw', pseudo });
   } else {
     // État POUSSER
+    if (grabCooldown) return;
     send({ type: 'grab', pseudo });
+    startGrabCooldown();
   }
 });
 
@@ -249,11 +253,32 @@ document.getElementById('action-btn').addEventListener('click', (e) => {
   if (hasFrisbee) {
     send({ type: 'throw', pseudo });
   } else {
+    if (grabCooldown) return;
     send({ type: 'grab', pseudo });
+    startGrabCooldown();
   }
 });
 
-function updateActionButtons() {
+function startGrabCooldown() {
+  const COOLDOWN = 5;
+  grabCooldown = true;
+  let remaining = COOLDOWN;
+  updateActionButtons();
+  grabCooldownInterval = setInterval(() => {
+    remaining--;
+    if (remaining <= 0) {
+      clearInterval(grabCooldownInterval);
+      grabCooldownInterval = null;
+      grabCooldown = false;
+      updateActionButtons();
+    } else {
+      updateActionButtons(remaining);
+    }
+  }, 1000);
+  updateActionButtons(remaining);
+}
+
+function updateActionButtons(cooldownRemaining) {
   const btn       = document.getElementById('action-btn');
   const label     = btn ? btn.querySelector('.btn-label') : null;
   const statusDiv = document.getElementById('action-status');
@@ -261,7 +286,7 @@ function updateActionButtons() {
   const blocked = isStunned || isGrabbed;
 
   if (btn) {
-    btn.classList.remove('mode-push', 'mode-throw', 'mode-stunned');
+    btn.classList.remove('mode-push', 'mode-throw', 'mode-stunned', 'mode-cooldown');
 
     if (blocked) {
       btn.classList.add('mode-stunned');
@@ -269,6 +294,9 @@ function updateActionButtons() {
     } else if (hasFrisbee) {
       btn.classList.add('mode-throw');
       if (label) label.textContent = 'Lancer';
+    } else if (grabCooldown) {
+      btn.classList.add('mode-cooldown');
+      if (label) label.textContent = `⏳ ${cooldownRemaining ?? ''}s`;
     } else {
       btn.classList.add('mode-push');
       if (label) label.textContent = 'Pousser';
@@ -276,10 +304,11 @@ function updateActionButtons() {
   }
 
   if (statusDiv) {
-    if (isStunned)       statusDiv.textContent = '😵 ÉTOURDI…';
-    else if (isGrabbed)  statusDiv.textContent = '🤝 ATTRAPÉ !';
-    else if (hasFrisbee) statusDiv.textContent = '🥏 Tu as le frisbee !';
-    else                 statusDiv.textContent = '';
+    if (isStunned)          statusDiv.textContent = '😵 ÉTOURDI…';
+    else if (isGrabbed)     statusDiv.textContent = '🤝 ATTRAPÉ !';
+    else if (grabCooldown)  statusDiv.textContent = `⏳ Cooldown… (${cooldownRemaining ?? ''}s)`;
+    else if (hasFrisbee)    statusDiv.textContent = '🥏 Tu as le frisbee !';
+    else                    statusDiv.textContent = '';
   }
 }
 

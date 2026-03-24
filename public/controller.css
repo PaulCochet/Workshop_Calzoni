@@ -455,6 +455,20 @@ input[type="text"] {
   pointer-events: none;
 }
 
+/* Cooldown = bouton orangé non cliquable */
+#action-btn.mode-cooldown {
+  background: #7a4500;
+  color: #f39c12;
+  box-shadow: 0 0.2rem 0 #3a2000;
+  pointer-events: none;
+  animation: cooldown-pulse 1s ease-in-out infinite;
+}
+
+@keyframes cooldown-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.6; }
+}
+
 /* ── FEEDBACK / OVERLAYS ── */
 #grab-feedback {
   display: none;

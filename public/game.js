@@ -282,6 +282,10 @@ function createFrisbee() {
         child.receiveShadow = true;
       }
     });
+    // Centrer le modèle sur son propre centre géométrique
+    const box = new THREE.Box3().setFromObject(model);
+    const center = box.getCenter(new THREE.Vector3());
+    model.position.sub(center);
     mesh.add(model);
     console.log('Frisbee GLB chargé ✔');
   }, undefined, (err) => {
@@ -309,23 +313,6 @@ function createFrisbee() {
 
   frisbee = { mesh, body };
   resetFrisbee();
-}
-
-// Murs de sécurité invisibles qui encadrent toute la zone de jeu
-// (fallback si les colliders de la map ne couvrent pas tout le périmètre)
-const MAP_HALF_W = 10;  // demi-largeur en unités monde
-const MAP_HALF_D = 7;   // demi-profondeur en unités monde
-const WALL_H = 4;   // hauteur des murs invisibles
-
-function createBoundaryWalls() {
-  const walls = [
-    RAPIER.ColliderDesc.cuboid(0.2, WALL_H, MAP_HALF_D).setTranslation(-MAP_HALF_W, WALL_H, 0),  // gauche
-    RAPIER.ColliderDesc.cuboid(0.2, WALL_H, MAP_HALF_D).setTranslation(MAP_HALF_W, WALL_H, 0),  // droite
-    RAPIER.ColliderDesc.cuboid(MAP_HALF_W, WALL_H, 0.2).setTranslation(0, WALL_H, -MAP_HALF_D), // haut
-    RAPIER.ColliderDesc.cuboid(MAP_HALF_W, WALL_H, 0.2).setTranslation(0, WALL_H, MAP_HALF_D), // bas
-    RAPIER.ColliderDesc.cuboid(MAP_HALF_W, 0.2, MAP_HALF_D).setTranslation(0, -0.2, 0),         // sol
-  ];
-  walls.forEach(d => world.createCollider(d.setCollisionGroups(CG_COL).setRestitution(0.9).setFriction(0.05)));
 }
 
 function resetFrisbee() {
@@ -1028,7 +1015,7 @@ window.addEventListener('resize', () => {
 // =============================================================================
 loadMap();
 createFrisbee();
-createBoundaryWalls(); // Murs de sécurité invisibles pour empêcher le frisbee de sortir
+
 
 document.getElementById('lobby-overlay').style.display = 'flex';
 document.getElementById('hud').style.display = 'none';

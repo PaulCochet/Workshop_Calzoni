@@ -546,14 +546,7 @@ function draw() {
 }
 
 function drawArena() {
-  push();
-  // We keep the center geometry and team colors as overlays on top of the 3D map
-  stroke(35, 45, 65, 120); strokeWeight(2); line(width / 2, 0, width / 2, height);
-  noStroke();
-  fill(...COLOR_TEAM_A, 18); rect(0, 0, width * 0.35, height);
-  fill(...COLOR_TEAM_B, 18); rect(width * 0.65, 0, width * 0.35, height);
-  noFill(); stroke(35, 45, 65, 120); strokeWeight(2); circle(width / 2, height / 2, 180);
-  pop();
+  // Empty: Map is entirely handled by the background 3D model
 }
 
 // =============================================================================

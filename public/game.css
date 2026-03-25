@@ -17,6 +17,7 @@ body {
   height: 100vh;
   z-index: -1;
   pointer-events: none;
+  transform: scale(2.8);
 }
 
 canvas {
@@ -50,7 +51,7 @@ canvas {
   top: 0;
   left: 0;
   right: 0;
-  display: none;
+  display: none !important; /* Force hiding the HUD so the map takes all the space visually */
   align-items: center;
   justify-content: space-between;
   padding: 10px 24px;

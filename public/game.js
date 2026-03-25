@@ -356,7 +356,11 @@ function setConnectionStatus(text, ok) {
 //  HANDLERS (logique inchangée, adaptée 3D)
 // =============================================================================
 function handleSpawn(msg) {
-  if (players[msg.pseudo]) return;
+  if (players[msg.pseudo]) {
+    // Si le joueur existe déjà (ex: rafraîchissement de la page manette) on renvoie quand même l'état du lobby
+    if (gamePhase === 'lobby') broadcastLobbyState();
+    return;
+  }
   spawnPlayer(msg.pseudo, msg.team, msg.isHost);
   if (gamePhase === 'playing') {
     placePlayerOnMap(players[msg.pseudo]);

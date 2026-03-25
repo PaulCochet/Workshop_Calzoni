@@ -48,26 +48,36 @@
 
   <!-- ÉCRAN 3 : LOBBY -->
   <div id="lobby-screen">
-    <div id="lobby-pseudo"></div>
-    <div id="lobby-player-count">0 joueur(s)</div>
-    <div class="lobby-teams-ctrl">
-      <div class="lobby-team-col">
-        <div class="lobby-team-label label-a">🔵 Équipe A</div>
-        <div id="lobby-list-a">
-          <div class="lobby-empty">—</div>
+    <h3 id="lobby-player-count">0 joueur(s) connecté(s)</h3>
+    
+    <div class="lobby-layout">
+      <!-- Tableaux -->
+      <div class="lobby-tables">
+        <div class="lobby-col">
+          <div class="lobby-header">PIZZAIOLOS</div>
+          <div class="lobby-list-container">
+            <div id="lobby-list-a" class="lobby-list">
+              <div class="lobby-empty">—</div>
+            </div>
+          </div>
+        </div>
+        <div class="lobby-col">
+          <div class="lobby-header">CLIENTS</div>
+          <div class="lobby-list-container">
+            <div id="lobby-list-b" class="lobby-list">
+              <div class="lobby-empty">—</div>
+            </div>
+          </div>
         </div>
       </div>
-      <div class="lobby-team-col">
-        <div class="lobby-team-label label-b">🔴 Équipe B</div>
-        <div id="lobby-list-b">
-          <div class="lobby-empty">—</div>
-        </div>
+      
+      <!-- Bouton Play -->
+      <div id="start-btn-wrapper" style="display: none;">
+        <button id="start-game-btn" class="btn-play">
+          <img src="Img/Play.svg" alt="Play">
+        </button>
       </div>
     </div>
-    <div id="start-btn-wrapper">
-      <button id="start-game-btn">▶ LANCER LA PARTIE</button>
-    </div>
-    <div class="lobby-waiting">En attente du host pour lancer…</div>
   </div>
 
   <!-- ÉCRAN 4 : CONTRÔLES (Format Paysage) -->

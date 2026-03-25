@@ -121,10 +121,10 @@ function joinTeam(t) {
   send({ type: 'spawn', pseudo, team, isHost });
   screenTeam.style.display  = 'none';
   screenLobby.style.display = 'flex';
-  document.getElementById('lobby-pseudo').textContent = pseudo + ' — Équipe ' + team;
-  document.getElementById('start-btn-wrapper').style.display = 'block';
-  const waitingText = document.querySelector('.lobby-waiting');
-  if (waitingText) waitingText.style.display = 'none';
+  document.getElementById('start-btn-wrapper').style.display = 'flex';
+  
+  // Affichage immédiat (au cas où le jeu principal n'est pas encore ouvert ou met du temps à répondre)
+  updateLobbyDisplay([{ pseudo, team, isHost }]);
 }
 
 // Lobby → lancer la partie (tout le monde)
@@ -133,14 +133,24 @@ document.getElementById('start-game-btn').addEventListener('click', () => {
 });
 
 function updateLobbyDisplay(playersList) {
-  const listA = playersList.filter(p => p.team === 'A').map(p => p.pseudo);
-  const listB = playersList.filter(p => p.team === 'B').map(p => p.pseudo);
+  const listA = playersList.filter(p => p.team === 'A');
+  const listB = playersList.filter(p => p.team === 'B');
   const elA = document.getElementById('lobby-list-a');
   const elB = document.getElementById('lobby-list-b');
-  if (elA) elA.innerHTML = listA.map(n => `<div class="lobby-entry">🔵 ${n}</div>`).join('') || '<div class="lobby-empty">—</div>';
-  if (elB) elB.innerHTML = listB.map(n => `<div class="lobby-entry">🔴 ${n}</div>`).join('') || '<div class="lobby-empty">—</div>';
+
+  if (elA) {
+    elA.innerHTML = listA.map(p => 
+      `<div class="lobby-entry ${p.pseudo === pseudo ? 'is-me' : ''}">${p.pseudo === pseudo ? 'Moi' : p.pseudo}</div>`
+    ).join('') || '<div class="lobby-empty">—</div>';
+  }
+  if (elB) {
+    elB.innerHTML = listB.map(p => 
+      `<div class="lobby-entry ${p.pseudo === pseudo ? 'is-me' : ''}">${p.pseudo === pseudo ? 'Moi' : p.pseudo}</div>`
+    ).join('') || '<div class="lobby-empty">—</div>';
+  }
+  
   const cnt = document.getElementById('lobby-player-count');
-  if (cnt) cnt.textContent = `${playersList.length} joueur(s)`;
+  if (cnt) cnt.textContent = `${playersList.length} joueur(s) connecté(s)`;
 }
 
 function enterGame() {

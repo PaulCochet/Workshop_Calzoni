@@ -893,18 +893,18 @@ function removeStunEffect(pseudo) {
 // =============================================================================
 const footDustParticles = []; // { mesh, life, maxLife }
 const DUST_POOL_MAX = 120;
-const dustGeo = new THREE.SphereGeometry(0.04, 4, 4);
-const dustMat = new THREE.MeshBasicMaterial({ color: 0x888888, transparent: true, opacity: 0.5 });
+const dustGeo = new THREE.SphereGeometry(0.08, 4, 4);
+const dustMat = new THREE.MeshBasicMaterial({ color: 0x999999, transparent: true, opacity: 0.7 });
 
 function spawnFootDust(pos) {
   if (footDustParticles.length >= DUST_POOL_MAX) return;
   const p = new THREE.Mesh(dustGeo, dustMat.clone());
   p.position.set(
     pos.x + (Math.random() - 0.5) * 0.3,
-    pos.y + 0.1,
+    pos.y - 0.15,
     pos.z + (Math.random() - 0.5) * 0.3
   );
-  const scale = 0.5 + Math.random() * 0.8;
+  const scale = 1.0 + Math.random() * 1.0;
   p.scale.setScalar(scale);
   scene.add(p);
   footDustParticles.push({ mesh: p, life: 0.4 + Math.random() * 0.2, maxLife: 0.5 });
@@ -915,7 +915,7 @@ function updateFootDust(dt) {
     const d = footDustParticles[i];
     d.life -= dt;
     d.mesh.position.y += dt * 0.3;
-    d.mesh.material.opacity = Math.max(0, (d.life / d.maxLife) * 0.45);
+    d.mesh.material.opacity = Math.max(0, (d.life / d.maxLife) * 0.65);
     if (d.life <= 0) {
       scene.remove(d.mesh);
       d.mesh.material.dispose();

@@ -394,21 +394,26 @@ function spawnPlayer(pseudo, team, isHost) {
   mesh.add(label);
 
   // ── Physique Rapier — capsule ──
-  const bodyDesc = RAPIER.RigidBodyDesc.dynamic()
-    .setTranslation(startX, 1.2, startZ)
-    .lockRotations();  // le perso ne tombe pas
+  const bodyDesc = RAPIER.RigidBodyDesc.kinematicPositionBased()
+    .setTranslation(startX, 1.2, startZ);
   const rbody = world.createRigidBody(bodyDesc);
-  world.createCollider(
+  const collider = world.createCollider(
     RAPIER.ColliderDesc.capsule(0.35, 0.38)
-      .setFriction(0.5)
-      .setRestitution(0.1)
-      .setCollisionGroups(CG_PLAYER),  // bloqué par col + lowcol
+      .setFriction(0.0).setRestitution(0.0)
+      .setCollisionGroups(CG_PLAYER),
     rbody
   );
+  const charCtrl = world.createCharacterController(0.01);
+  charCtrl.setUp({ x: 0, y: 1, z: 0 });
+  charCtrl.setMaxSlopeClimbAngle(45 * Math.PI / 180);
+  charCtrl.setMinSlopeSlideAngle(30 * Math.PI / 180);
+  charCtrl.enableAutostep(0.3, 0.1, true);
+  charCtrl.enableSnapToGround(0.3);
 
   players[pseudo] = {
     pseudo, team, isHost: isHost || false,
     mesh, body: rbody, label: div, aimPivot,
+    vel: { x: 0, y: -0.5, z: 0 }, collider, charCtrl,
     stunned: false, stunTimer: 0,
     grabbed: false, grabTimer: 0, grabbedBy: null,
     inputDir: { x: 0, z: 0 },
@@ -421,6 +426,7 @@ function removePlayer(pseudo) {
   const p = players[pseudo];
   if (!p) return;
   scene.remove(p.mesh);
+  world.removeCharacterController(p.charCtrl);
   world.removeRigidBody(p.body);
   if (frisbeeOwner === pseudo) frisbeeOwner = null;
   delete players[pseudo];
@@ -446,15 +452,15 @@ function placePlayerOnMap(p) {
   } else {
     // Fallback total si la map n'a pas encore chargé
     const x = p.team === 'A' ? -4 + Math.random() * 2 : 4 - Math.random() * 2;
-    p.body.setTranslation({ x, y: 1.5, z: (Math.random() - 0.5) * 4 }, true);
-    p.body.setLinvel({ x: 0, y: 0, z: 0 }, true);
+    p.body.setNextKinematicTranslation({ x, y: 1.5, z: (Math.random() - 0.5) * 4 });
+    p.vel = { x: 0, y: -0.5, z: 0 };
     return;
   }
 
   const sp = candidates[Math.floor(Math.random() * candidates.length)];
   // +1.2 sur Y pour spawner légèrement au-dessus du point (évite d'être dans le sol)
-  p.body.setTranslation({ x: sp.x, y: sp.y + 1.2, z: sp.z }, true);
-  p.body.setLinvel({ x: 0, y: 0, z: 0 }, true);
+  p.body.setNextKinematicTranslation({ x: sp.x, y: sp.y + 1.2, z: sp.z });
+  p.vel = { x: 0, y: -0.5, z: 0 };
 }
 
 // =============================================================================
@@ -568,11 +574,8 @@ function handleGrab(msg) {
     const dx = tPos.x - gPos.x;
     const dz = tPos.z - gPos.z;
     const d = Math.hypot(dx, dz) || 1;
-    target.body.setLinvel({
-      x: (dx / d) * KNOCKBACK_FORCE,
-      y: 0,
-      z: (dz / d) * KNOCKBACK_FORCE
-    }, true);
+    target.vel.x = (dx / d) * KNOCKBACK_FORCE;
+    target.vel.z = (dz / d) * KNOCKBACK_FORCE;
 
     if (frisbeeOwner === closest) {
       frisbeeOwner = null;
@@ -870,8 +873,8 @@ function gameLoop(timestamp) {
         broadcast({ type: 'recovered', pseudo });
       }
       // Ralentissement progressif
-      const v = p.body.linvel();
-      p.body.setLinvel({ x: v.x * 0.8, y: v.y, z: v.z * 0.8 }, true);
+      p.vel.x *= 0.8;
+      p.vel.z *= 0.8;
       createStunEffect(pseudo);
       updateStunEffect(pseudo, pos);
 
@@ -883,24 +886,30 @@ function gameLoop(timestamp) {
         removeGrabStars(pseudo);
         broadcast({ type: 'released', pseudo });
       }
-      const v = p.body.linvel();
-      p.body.setLinvel({ x: v.x * 0.85, y: v.y, z: v.z * 0.85 }, true);
+      p.vel.x *= 0.85;
+      p.vel.z *= 0.85;
       createGrabStars(pseudo);
       updateGrabStars(pseudo, pos);
 
     } else {
       // Mouvement normal
       const speed = (frisbeeOwner === pseudo) ? PLAYER_SPEED * 0.65 : PLAYER_SPEED;
-      const v = p.body.linvel();
-      p.body.setLinvel({
-        x: p.inputDir.x * speed,
-        y: v.y,            // gravité conservée
-        z: p.inputDir.z * speed
-      }, true);
+      p.vel.x = p.inputDir.x * speed;
+      p.vel.z = p.inputDir.z * speed;
     }
 
-    // Sync mesh → position physique
-    p.mesh.position.set(pos.x, pos.y, pos.z);
+    // Gravité
+    p.vel.y = Math.max(p.vel.y - 20 * dt, -20);
+    
+    // Mouvement avec CharacterController
+    const desired = { x: p.vel.x * dt, y: p.vel.y * dt, z: p.vel.z * dt };
+    p.charCtrl.computeColliderMovement(p.collider, desired);
+    const moved = p.charCtrl.computedMovement();
+    if (p.charCtrl.computedGrounded()) p.vel.y = 0;
+    
+    const newPos = { x: pos.x + moved.x, y: pos.y + moved.y, z: pos.z + moved.z };
+    p.body.setNextKinematicTranslation(newPos);
+    p.mesh.position.set(newPos.x, newPos.y, newPos.z);
 
     // Orientation du perso vers la direction du mouvement
     const spd = Math.hypot(p.inputDir.x, p.inputDir.z);

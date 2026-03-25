@@ -125,6 +125,46 @@
     <button id="restart-btn">Recommencer une partie</button>
   </div>
 
+  <!-- Étape de chargement / Règles -->
+  <div id="loading-screen" style="display: none;">
+    <div class="loading-left">
+      <img src="Img/Tipolino Logo.svg" alt="Tipolino" class="loading-logo">
+      <img src="Img/exemple_game.png" alt="Game Preview" class="loading-game-thumb">
+      <div class="loading-progress-container">
+        <div class="loading-text">CHARGEMENT...</div>
+        <div class="loading-bar-bg">
+          <div id="loading-bar-fill"></div>
+        </div>
+      </div>
+    </div>
+    <div class="loading-right">
+      <div class="rules-container">
+        <!-- Bloc Objectif -->
+        <div class="rule-block">
+          <div class="rule-header">
+            <img src="Img/target.svg" alt="Target">
+            <span>Objectif</span>
+          </div>
+          <div class="rule-desc">
+            <span class="highlight">Assommé</span> le plus de fois les adversaire avec la boite à pizza
+          </div>
+        </div>
+
+        <!-- Bloc Actions -->
+        <div class="rule-block">
+          <div class="rule-header">
+            <img src="Img/frisbee.svg" alt="Actions">
+            <span>2 Actions</span>
+          </div>
+          <div class="rule-desc">
+            <span class="highlight">Pousser</span> ses allié ou adversaires<br>
+            Et <span class="highlight">lancer</span> la boite à pizza
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="transition-overlay">
     <div id="transition-lottie-container"></div>
   </div>

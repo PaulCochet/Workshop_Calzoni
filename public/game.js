@@ -638,16 +638,69 @@ function updateLobbyUI() {
 //  DÉMARRER / FINIR LA PARTIE
 // =============================================================================
 function startGame() {
-  if (gamePhase === 'playing') return;
+  if (gamePhase !== 'lobby') return;
+  
+  gamePhase = 'loading';
+  document.getElementById('lobby-overlay').style.display = 'none';
+  document.getElementById('loading-screen').style.display = 'flex';
+  
+  const progressBar = document.getElementById('loading-bar-fill');
+  const DURATION = 8000; // 8 secondes de chargement
+  const start = performance.now();
+  
+  function animateLoading(time) {
+    const elapsed = time - start;
+    const progress = Math.min(elapsed / DURATION, 1);
+    if (progressBar) progressBar.style.width = (progress * 100) + '%';
+    
+    if (progress < 1) {
+      requestAnimationFrame(animateLoading);
+    } else {
+      finalizeStart();
+    }
+  }
+  requestAnimationFrame(animateLoading);
+
+  function finalizeStart() {
+    startLoadingToGameTransition();
+  }
+}
+
+function startLoadingToGameTransition() {
+  const overlay = document.getElementById('transition-overlay');
+  if (!transitionAnim || !overlay) {
+    completeStartSequence();
+    return;
+  }
+
+  overlay.style.display = "flex";
+  overlay.style.pointerEvents = "auto";
+  transitionAnim.goToAndPlay(0, true);
+
+  // Switch UI au milieu de l'animation
+  setTimeout(() => {
+    completeStartSequence();
+  }, 600);
+
+  transitionAnim.removeEventListener('complete');
+  transitionAnim.addEventListener('complete', () => {
+    overlay.style.pointerEvents = "none";
+    overlay.style.display = "none";
+  });
+}
+
+function completeStartSequence() {
   gamePhase = 'playing';
   gameTimer = GAME_DURATION;
   scoreA = scoreB = 0;
 
-  document.getElementById('lobby-overlay').style.display = 'none';
+  document.getElementById('loading-screen').style.display = 'none';
   document.getElementById('hud').style.display = 'flex';
   showIngameQR();
 
-  for (const pseudo in players) placePlayerOnMap(players[pseudo]);
+  for (const pseudo in players) {
+    placePlayerOnMap(players[pseudo]);
+  }
   resetFrisbee();
   broadcast({ type: 'gameStarted' });
   updateScoreboard();
@@ -993,11 +1046,15 @@ function gameLoop(timestamp) {
       p.vel.x *= 0.85;
       p.vel.z *= 0.85;
 
-    } else {
-      // Mouvement normal
+    } else if (gamePhase === 'playing') {
+      // Mouvement normal uniquement en jeu
       const speed = (frisbeeOwner === pseudo) ? PLAYER_SPEED * 0.65 : PLAYER_SPEED;
       p.vel.x = p.inputDir.x * speed;
       p.vel.z = p.inputDir.z * speed;
+    } else {
+      // Pas de mouvement pendant le chargement ou menu
+      p.vel.x = 0;
+      p.vel.z = 0;
     }
 
     // Gravité

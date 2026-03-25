@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
@@ -8,97 +9,103 @@
   <!-- ── TYPOGRAPHIES UI ── -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Boldonse&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Boldonse&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="controller.css">
 </head>
+
 <body>
 
-<!-- Bouton Fullscreen -->
-<button id="fullscreen-btn" onclick="document.documentElement.requestFullscreen && document.documentElement.requestFullscreen()">⛶</button>
+  <!-- Bouton Fullscreen -->
+  <button id="fullscreen-btn"
+    onclick="document.documentElement.requestFullscreen && document.documentElement.requestFullscreen()">⛶</button>
 
-<!-- Portrait Overlay (CSS-driven) -->
-<div id="portrait-overlay">
-  <span>📱</span>
-  <p>Tourne ton téléphone en mode paysage pour jouer !</p>
-</div>
-
-<h1>🥏 ULTI-MATES</h1>
-<div class="subtitle">Assommez l'équipe adverse !</div>
-<div class="status disconnected" id="status">Connexion…</div>
-
-<!-- ÉCRAN 1 : PSEUDO -->
-<div id="login-screen">
-  <input type="text" id="pseudo-input" placeholder="Ton pseudo" maxlength="16" autocomplete="off">
-  <button class="btn-primary" id="pseudo-btn">Continuer →</button>
-</div>
-
-<!-- ÉCRAN 2 : ÉQUIPE -->
-<div id="team-screen">
-  <p>Choisis ton équipe :</p>
-  <div class="team-btns">
-    <button class="btn-team" id="btn-team-a">🔵 A</button>
-    <button class="btn-team" id="btn-team-b">🔴 B</button>
+  <!-- Portrait Overlay (CSS-driven) -->
+  <div id="portrait-overlay">
+    <span>📱</span>
+    <p>Tourne ton téléphone en mode paysage pour jouer !</p>
   </div>
-  <label class="host-option">
-    <input type="checkbox" id="host-checkbox">
-    Je suis le host 👑 (je lance la partie)
-  </label>
-</div>
 
-<!-- ÉCRAN 3 : LOBBY -->
-<div id="lobby-screen">
-  <div id="lobby-pseudo"></div>
-  <div id="lobby-player-count">0 joueur(s)</div>
-  <div class="lobby-teams-ctrl">
-    <div class="lobby-team-col">
-      <div class="lobby-team-label label-a">🔵 Équipe A</div>
-      <div id="lobby-list-a"><div class="lobby-empty">—</div></div>
+  <!-- Logo et statut masqués -->
+  <div class="status disconnected" id="status" style="display: none;">Connexion…</div>
+
+  <!-- ÉCRAN 1 : PSEUDO -->
+  <div id="login-screen">
+    <input type="text" id="pseudo-input" placeholder="Ton pseudo" maxlength="16" autocomplete="off">
+    <button class="btn-primary" id="pseudo-btn">Continuer</button>
+  </div>
+
+  <!-- ÉCRAN 2 : ÉQUIPE -->
+  <div id="team-screen">
+    <p>Choisis ton équipe :</p>
+    <div class="team-btns">
+      <button class="btn-team" id="btn-team-a">🔵 A</button>
+      <button class="btn-team" id="btn-team-b">🔴 B</button>
     </div>
-    <div class="lobby-team-col">
-      <div class="lobby-team-label label-b">🔴 Équipe B</div>
-      <div id="lobby-list-b"><div class="lobby-empty">—</div></div>
+    <label class="host-option">
+      <input type="checkbox" id="host-checkbox">
+      Je suis le host 👑 (je lance la partie)
+    </label>
+  </div>
+
+  <!-- ÉCRAN 3 : LOBBY -->
+  <div id="lobby-screen">
+    <div id="lobby-pseudo"></div>
+    <div id="lobby-player-count">0 joueur(s)</div>
+    <div class="lobby-teams-ctrl">
+      <div class="lobby-team-col">
+        <div class="lobby-team-label label-a">🔵 Équipe A</div>
+        <div id="lobby-list-a">
+          <div class="lobby-empty">—</div>
+        </div>
+      </div>
+      <div class="lobby-team-col">
+        <div class="lobby-team-label label-b">🔴 Équipe B</div>
+        <div id="lobby-list-b">
+          <div class="lobby-empty">—</div>
+        </div>
+      </div>
     </div>
-  </div>
-  <div id="start-btn-wrapper">
-    <button id="start-game-btn">▶ LANCER LA PARTIE</button>
-  </div>
-  <div class="lobby-waiting">En attente du host pour lancer…</div>
-</div>
-
-<!-- ÉCRAN 4 : CONTRÔLES (Format Paysage) -->
-<div id="control-screen">
-
-  <!-- JOYSTICK -->
-  <div id="joystick-zone">
-    <div id="joystick-knob"></div>
+    <div id="start-btn-wrapper">
+      <button id="start-game-btn">▶ LANCER LA PARTIE</button>
+    </div>
+    <div class="lobby-waiting">En attente du host pour lancer…</div>
   </div>
 
-  <!-- BOUTON CONTEXTUEL UNIQUE -->
-  <button id="action-btn" class="mode-push">
-    <img class="btn-icon icon-throw" src="Img/iconlancer.svg" alt="Lancer">
-    <img class="btn-icon icon-push"  src="Img/HandFist.svg"   alt="Pousser">
-    <span class="btn-label">Pousser</span>
-  </button>
+  <!-- ÉCRAN 4 : CONTRÔLES (Format Paysage) -->
+  <div id="control-screen">
 
-  <!-- Éléments cachés (utilisés par JS) -->
-  <div id="grab-feedback" style="display:none;">🤝 Tu es attrapé !</div>
-  <div id="action-status" style="display:none;"></div>
-  <div id="player-name"   style="display:none;"></div>
-</div>
+    <!-- JOYSTICK -->
+    <div id="joystick-zone">
+      <div id="joystick-knob"></div>
+    </div>
 
-<!-- Rotation Screen -->
-<div id="rotate-overlay">
-  <span>📱⟲</span>
-  <p style="margin-top: 10px;">Veuillez tourner votre téléphone en mode paysage pour jouer !</p>
-  <button id="force-landscape-btn">Ma rotation est bloquée (Jouer quand même)</button>
-</div>
+    <!-- BOUTON CONTEXTUEL UNIQUE -->
+    <button id="action-btn" class="mode-push">
+      <img class="btn-icon icon-throw" src="Img/iconlancer.svg" alt="Lancer">
+      <img class="btn-icon icon-push" src="Img/HandFist.svg" alt="Pousser">
+      <span class="btn-label">Pousser</span>
+    </button>
 
-<!-- Overlay étourdi -->
-<div id="stun-overlay">
-  <span>😵</span><span>ÉTOURDI !</span>
-</div>
+    <!-- Éléments cachés (utilisés par JS) -->
+    <div id="grab-feedback" style="display:none;">🤝 Tu es attrapé !</div>
+    <div id="action-status" style="display:none;"></div>
+    <div id="player-name" style="display:none;"></div>
+  </div>
 
-<script src="controller.js"></script>
+  <!-- Rotation Screen -->
+  <div id="rotate-overlay">
+    <span>📱⟲</span>
+    <p style="margin-top: 10px;">Veuillez tourner votre téléphone en mode paysage pour jouer !</p>
+    <button id="force-landscape-btn">Ma rotation est bloquée (Jouer quand même)</button>
+  </div>
+
+  <!-- Overlay étourdi -->
+  <div id="stun-overlay">
+    <span>😵</span><span>ÉTOURDI !</span>
+  </div>
+
+  <script src="controller.js"></script>
 </body>
+
 </html>

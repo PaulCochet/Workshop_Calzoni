@@ -8,7 +8,7 @@
   --white: #fefce1;
   --shadows: #2f3300;
   --font-title: 'Boldonse', serif;
-  --font-body: 'Inter', sans-serif;
+  --font-body: var(--font-title); /* Remplace Inter par Boldonse */
 }
 
 * {
@@ -181,21 +181,27 @@ input[type="text"] {
   font-family: var(--font-body);
   font-size: 1.1em;
   padding: 0.875rem 1.125rem;
-  border: 0.125rem solid var(--yellow);
-  border-radius: 0.75rem;
-  background: #1a1a2e;
-  color: #fff;
-  text-align: center;
+  border: 0.25rem solid var(--black);
+  border-radius: 1rem;
+  background: var(--white);
+  color: var(--black);
+  text-align: start;
   width: 100%;
   outline: none;
+}
+
+input[type="text"]::placeholder {
+  color: var(--black);
+  opacity: 0.6; /* Rend le texte du placeholder plus lisible */
 }
 
 .btn-primary {
   font-family: var(--font-body);
   width: 100%;
   padding: 1rem;
-  background: var(--yellow);
-  color: var(--black);
+  background: var(--black);
+  color: var(--white);
+  box-shadow: 0 0.25rem 0 0.5rem var(--shadows);
   font-size: 1.1em;
   font-weight: 700;
   border: none;

@@ -1,14 +1,14 @@
 window._p5play_intro_image = '';
 
 // =============================================================================
-//  GAME.JS – Ulti-mates v2
+//  GAME.JS – Ulti-mates v2. CACA
 // =============================================================================
 
 // --- CONSTANTES --------------------------------------------------------------
 const PLAYER_RADIUS = 20;
 const PLAYER_SPEED = 6.0;
 const STUN_DURATION = 3;
-const GAME_DURATION = 120;
+const GAME_DURATION = 140;
 const FRISBEE_SPEED = 24;
 const FRISBEE_RADIUS = 12;
 const THROW_COOLDOWN = 0.6;

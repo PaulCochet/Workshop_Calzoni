@@ -11,7 +11,10 @@
 
 @font-face {
   font-family: 'Boldonse';
-  src: url('fonts/Boldonse.woff2') format('woff2');
+  src: url('fonts/Boldonse.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
 }
 
 * {

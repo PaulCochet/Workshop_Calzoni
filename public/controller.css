@@ -1,3 +1,11 @@
+@font-face {
+  font-family: 'Boldonse';
+  src: url('fonts/Boldonse.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* ── VARIABLES DE STYLE ── */
 :root {
   --yellow: #faed36;

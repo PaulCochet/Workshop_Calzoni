@@ -176,7 +176,47 @@ canvas {
     opacity: 0.5;
   }
 }
+/* ── ANIMATION DE POINT (LOTTIE) ─────────────── */
+#point-lottie-wrapper {
+  position: absolute;
+  top: 4.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 350px;
+  max-width: 80vw;
+  pointer-events: none;
+  z-index: 20;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+}
 
+#point-lottie-container {
+  width: 100%;
+  aspect-ratio: 2335 / 1636;
+}
+
+#point-lottie-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 1.8rem;
+  font-weight: 900;
+  color: var(--white);
+  -webkit-text-stroke: 6px var(--black);
+  paint-order: stroke fill;
+  text-transform: uppercase;
+  opacity: 0;
+  transition: opacity 0.2s;
+  text-align: center;
+  white-space: nowrap;
+  font-family: var(--font-title);
+}
+
+#point-lottie-text.visible {
+  opacity: 1;
+}
 
 /* ── LOBBY ───────────────────────────────────── */
 #lobby-overlay {

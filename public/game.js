@@ -74,6 +74,7 @@ const spawnPoints = [];     // THREE.Vector3[] — rempli depuis la map GLB
 let gamePhase = 'lobby';   // 'lobby' | 'playing' | 'ended'
 let gameTimer = GAME_DURATION;
 let scoreA = 0, scoreB = 0;
+let pointAnim = null;
 let lastTimestamp = 0;
 
 let ws;
@@ -628,6 +629,26 @@ function startGame() {
   updateScoreboard();
 }
 
+function triggerPointAnimation(pseudo) {
+  const wrapper = document.getElementById('point-lottie-wrapper');
+  const textEl = document.getElementById('point-lottie-text');
+  if (!pointAnim || !wrapper || !textEl) return;
+
+  textEl.textContent = pseudo;
+  wrapper.style.display = 'flex';
+  textEl.classList.add('visible');
+
+  pointAnim.stop();
+  pointAnim.setSpeed(2.5);
+  pointAnim.play();
+
+  pointAnim.removeEventListener('complete');
+  pointAnim.addEventListener('complete', () => {
+    textEl.classList.remove('visible');
+    wrapper.style.display = 'none';
+  });
+}
+
 function stunPlayer(pseudo, throwerPseudo = null) {
   const p = players[pseudo];
   if (!p || p.stunned) return;
@@ -640,11 +661,13 @@ function stunPlayer(pseudo, throwerPseudo = null) {
     scoreB++;
     if (throwerPseudo && players[throwerPseudo] && players[throwerPseudo].team === 'B') {
       players[throwerPseudo].points++;
+      triggerPointAnimation(throwerPseudo);
     }
   } else {
     scoreA++;
     if (throwerPseudo && players[throwerPseudo] && players[throwerPseudo].team === 'A') {
       players[throwerPseudo].points++;
+      triggerPointAnimation(throwerPseudo);
     }
   }
 
@@ -1027,6 +1050,17 @@ fetch('/api/ip')
     generateQR(document.getElementById('lobby-qr-code'), url, 200);
   })
   .catch(console.error);
+
+// Initialisation Lottie
+if (typeof lottie !== 'undefined') {
+  pointAnim = lottie.loadAnimation({
+    container: document.getElementById('point-lottie-container'),
+    renderer: 'svg',
+    loop: false,
+    autoplay: false,
+    path: 'exemple/lottie_clean.json'
+  });
+}
 
 connectWebSocket();
 requestAnimationFrame(gameLoop);

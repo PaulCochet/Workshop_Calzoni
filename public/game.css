@@ -182,7 +182,7 @@ canvas {
   top: 4.5rem;
   left: 50%;
   transform: translateX(-50%);
-  width: 350px;
+  width: 440px;
   max-width: 80vw;
   pointer-events: none;
   z-index: 20;
@@ -404,48 +404,63 @@ canvas {
   margin-bottom: 0rem;
 }
 
-/* MVP BANNER */
-#end-mvp-banner {
-  display: none;
+#end-winner-highlight {
+  background: var(--white);
+  padding: 1.5rem 3rem;
+  border-radius: 1rem;
+  display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0;
-  width: 100%;
+  gap: 0.25rem;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  width: fit-content;
   max-width: 600px;
 }
 
-.mvp-band {
-  background: #fff;
-  width: 100%;
-  padding: 1.25rem 2rem;
-  border-radius: 1rem;
+.winner-label {
+  font-size: 2rem;
+  font-weight: 900;
+  color: var(--black);
+}
+
+.winner-score {
+  font-size: 1.4rem;
+  font-weight: bold;
+  color: #f39c12;
+}
+
+/* SCOREBOARD DETAILS */
+.end-player-row {
+  background: var(--white);
+  color: var(--black);
+  padding: 0.75rem 1rem;
+  border-radius: 0.25rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 1.1rem;
+  font-weight: bold;
+}
+
+.p-left {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  gap: 0.5rem;
 }
 
-.mvp-icon {
-  font-size: 2.2rem;
-}
-
-.mvp-name {
-  font-size: 2.2rem;
-  color: var(--black);
-  letter-spacing: -0.04em;
-}
-
-.mvp-tag {
+.mvp-tag-small {
   background: #f39c12;
   color: var(--black);
-  padding: 0.4rem 1.2rem;
-  border-radius: 0.5rem;
+  padding: 0.15rem 0.6rem;
+  border-radius: 0.25rem;
+  font-size: 0.7rem;
   font-weight: 900;
-  font-size: 1.1rem;
   text-transform: uppercase;
-  margin-top: -0.9rem;
-  z-index: 1;
+}
+
+.p-points {
+  color: #f39c12;
+  font-size: 1.1rem;
 }
 
 #end-winner {

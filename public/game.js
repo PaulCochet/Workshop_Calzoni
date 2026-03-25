@@ -639,7 +639,7 @@ function triggerPointAnimation(pseudo) {
   textEl.classList.add('visible');
 
   pointAnim.stop();
-  pointAnim.setSpeed(2.5);
+  pointAnim.setSpeed(1.0);
   pointAnim.play();
 
   pointAnim.removeEventListener('complete');
@@ -681,62 +681,63 @@ function stunPlayer(pseudo, throwerPseudo = null) {
 
 function showEndScreen() {
   const overlay = document.getElementById('end-overlay');
-  const winnerEl = document.getElementById('end-winner');
-  const bannerEl = document.getElementById('end-mvp-banner');
+  const highlightEl = document.getElementById('end-winner-highlight');
   const listA = document.getElementById('end-list-a');
   const listB = document.getElementById('end-list-b');
 
-  winnerEl.textContent =
-    scoreA > scoreB ? 'Équipe Pizzaïolos gagne !'
-      : scoreB > scoreA ? 'Équipe Clients gagne !'
-        : 'Égalité !';
+  // Équipe gagnante
+  let winnerText = "";
+  let winnerScore = 0;
+  if (scoreA > scoreB) {
+    winnerText = "Les Pizzaïolos gagnent !";
+    winnerScore = scoreA;
+  } else if (scoreB > scoreA) {
+    winnerText = "Les Clients gagnent !";
+    winnerScore = scoreB;
+  } else {
+    winnerText = "Match Nul !";
+    winnerScore = scoreA; // ou scoreB, ils sont égaux
+  }
 
-  // Calcul MVP
-  let mvp = null;
+  highlightEl.innerHTML = `
+    <div class="winner-label">${winnerText}</div>
+    <div class="winner-score">${winnerScore} points</div>
+  `;
+
+  // Calcul MVP global
+  let mvpPlayer = null;
   let maxPoints = 0;
   let tie = false;
-
   const allPlayers = Object.values(players);
   for (const p of allPlayers) {
     if (p.points > maxPoints) {
       maxPoints = p.points;
-      mvp = p;
+      mvpPlayer = p;
       tie = false;
     } else if (p.points === maxPoints && maxPoints > 0) {
       tie = true;
     }
   }
 
-  if (mvp && maxPoints > 0 && !tie) {
-    bannerEl.innerHTML = `
-      <div class="mvp-band">
-        <span class="mvp-icon">⭐</span>
-        <span class="mvp-name">${escapeHtml(mvp.pseudo)}</span>
+  // Fonction pour générer le lien HTML d'un joueur
+  const renderRow = (p) => {
+    const isMvp = mvpPlayer && p.pseudo === mvpPlayer.pseudo && !tie;
+    return `
+      <div class="end-player-row">
+        <div class="p-left">
+          <span class="p-name">${escapeHtml(p.pseudo)}</span>
+          ${isMvp ? '<span class="mvp-tag-small">MVP</span>' : ''}
+        </div>
+        <span class="p-points">+${p.points}</span>
       </div>
-      <div class="mvp-tag">MVP</div>
     `;
-    bannerEl.style.display = 'block';
-  } else {
-    bannerEl.style.display = 'none';
-  }
+  };
 
-  // Scoreboard détaillé
-  const playersA = allPlayers.filter(p => p.team === 'A').sort((a, b) => b.points - a.points);
-  const playersB = allPlayers.filter(p => p.team === 'B').sort((a, b) => b.points - a.points);
+  const playersA = allPlayers.filter(p => p.team === 'A').sort((a,b) => b.points - a.points);
+  const playersB = allPlayers.filter(p => p.team === 'B').sort((a,b) => b.points - a.points);
 
-  listA.innerHTML = playersA.map(p => `
-    <div class="end-player-row">
-      <span class="p-name">${escapeHtml(p.pseudo)}</span>
-      <span class="p-points">+${p.points} points</span>
-    </div>
-  `).join('') || '<div class="end-empty">Aucun joueur</div>';
-
-  listB.innerHTML = playersB.map(p => `
-    <div class="end-player-row">
-      <span class="p-name">${escapeHtml(p.pseudo)}</span>
-      <span class="p-points">+${p.points} points</span>
-    </div>
-  `).join('') || '<div class="end-empty">Aucun joueur</div>';
+  listA.innerHTML = playersA.map(renderRow).join('') || '<div class="end-empty">Aucun joueur</div>';
+  listB.innerHTML = playersB.map(renderRow).join('') || '<div class="end-empty">Aucun joueur</div>';
 
   overlay.style.display = 'flex';
 

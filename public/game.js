@@ -23,7 +23,7 @@ const GAME_DURATION = 140;     // secondes
 const FRISBEE_SPEED = 18;      // force d'impulsion au lancer
 const FRISBEE_HEIGHT = 1;     // hauteur fixe du frisbee au-dessus du sol
 const GRAB_RADIUS = 4.0;     // distance max pour attraper (augmentée)
-const GRAB_DURATION = 2;       // secondes
+const PUSH_DURATION = 0.3;     // secondes de recul
 const THROW_COOLDOWN = 0.6;
 const KNOCKBACK_FORCE = 28;      // impulsion de recul (augmentée)
 const FRISBEE_DAMPING = 1.8;     // résistance air du frisbee
@@ -563,7 +563,7 @@ function handleGrab(msg) {
   if (closest) {
     const target = players[closest];
     target.grabbed = true;
-    target.grabTimer = GRAB_DURATION;
+    target.grabTimer = PUSH_DURATION;
     target.grabbedBy = msg.pseudo;
     target.inputDir = { x: 0, z: 0 };
     // Supprimer l'effet de stun si le joueur vient d'être attrapé
@@ -637,8 +637,6 @@ function stunPlayer(pseudo) {
   p.stunTimer = STUN_DURATION;
   p.inputDir = { x: 0, z: 0 };
   p.grabbed = false;
-  // Supprimer les étoiles de grab si le joueur vient d'être touché
-  removeGrabStars(pseudo);
   if (p.team === 'A') scoreB++; else scoreA++;
   if (frisbeeOwner === pseudo) {
     frisbeeOwner = null;
@@ -765,76 +763,6 @@ function removeStunEffect(pseudo) {
 }
 
 // =============================================================================
-//  EFFETS VISUELS — étoiles au-dessus du joueur attrapé
-// =============================================================================
-const grabStars = {}; // pseudo → { points, t }
-
-// Créer une "star" 3D (pyramide aplatie)
-function makeStarMesh() {
-  const geo = new THREE.BufferGeometry();
-  const n = 5; // branches
-  const verts = [];
-  for (let i = 0; i < n; i++) {
-    // pointe externe
-    const ao = (i / n) * Math.PI * 2;
-    verts.push(Math.cos(ao) * 0.18, 0, Math.sin(ao) * 0.18);
-    // pointe interne
-    const ai = ao + Math.PI / n;
-    verts.push(Math.cos(ai) * 0.07, 0, Math.sin(ai) * 0.07);
-  }
-  // Centre
-  verts.push(0, 0, 0);
-  const vertices = new Float32Array(verts);
-  const center = n * 2;
-  const indices = [];
-  for (let i = 0; i < n * 2; i++) {
-    indices.push(center, i, (i + 1) % (n * 2));
-  }
-  geo.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
-  geo.setIndex(indices);
-  geo.computeVertexNormals();
-  const mat = new THREE.MeshBasicMaterial({ color: 0xFFD700, side: THREE.DoubleSide });
-  return new THREE.Mesh(geo, mat);
-}
-
-function createGrabStars(pseudo) {
-  if (grabStars[pseudo]) return;
-  const group = new THREE.Group();
-  const starCount = 3;
-  for (let i = 0; i < starCount; i++) {
-    const star = makeStarMesh();
-    group.add(star);
-  }
-  scene.add(group);
-  grabStars[pseudo] = { group, t: 0 };
-}
-
-function updateGrabStars(pseudo, playerPos) {
-  const ef = grabStars[pseudo];
-  if (!ef) return;
-  ef.t += 0.08;
-  const n = ef.group.children.length;
-  ef.group.children.forEach((star, i) => {
-    const angle = (i / n) * Math.PI * 2 + ef.t;
-    star.position.set(
-      playerPos.x + Math.cos(angle) * 0.55,
-      playerPos.y + 1.8,   // au-dessus de la tête
-      playerPos.z + Math.sin(angle) * 0.55
-    );
-    star.rotation.y = ef.t * 2 + i;
-    // Oscillation verticale douce
-    star.position.y += Math.sin(ef.t * 3 + i) * 0.07;
-  });
-}
-
-function removeGrabStars(pseudo) {
-  const ef = grabStars[pseudo];
-  if (!ef) return;
-  scene.remove(ef.group);
-  delete grabStars[pseudo];
-}
-
-// =============================================================================
 //  BOUCLE DE JEU PRINCIPALE
 // =============================================================================
 function gameLoop(timestamp) {
@@ -883,13 +811,10 @@ function gameLoop(timestamp) {
       if (p.grabTimer <= 0) {
         p.grabbed = false;
         p.grabbedBy = null;
-        removeGrabStars(pseudo);
         broadcast({ type: 'released', pseudo });
       }
       p.vel.x *= 0.85;
       p.vel.z *= 0.85;
-      createGrabStars(pseudo);
-      updateGrabStars(pseudo, pos);
 
     } else {
       // Mouvement normal

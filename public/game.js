@@ -21,7 +21,7 @@ const PLAYER_SPEED = 4;
 const STUN_DURATION = 3;       // secondes 
 const GAME_DURATION = 140;     // secondes
 const FRISBEE_SPEED = 18;      // force d'impulsion au lancer
-const FRISBEE_HEIGHT = 1;     // hauteur fixe du frisbee au-dessus du sol
+const FRISBEE_HEIGHT = 0.6;     // hauteur fixe du frisbee au-dessus du sol
 const GRAB_RADIUS = 4.0;     // distance max pour attraper (augmentée)
 const PUSH_DURATION = 0.3;     // secondes de recul
 const THROW_COOLDOWN = 0.6;
@@ -267,19 +267,30 @@ function createFallbackColliders() {
 //  FRISBEE
 // =============================================================================
 function createFrisbee() {
-  // Mesh visuel — disque jaune
-  const geo = new THREE.CylinderGeometry(0.28, 0.28, 0.07, 24);
-  const mat = new THREE.MeshLambertMaterial({ color: COLOR_FRISBEE, emissive: 0x443300 });
-  const mesh = new THREE.Mesh(geo, mat);
-  mesh.castShadow = true;
+  // Mesh visuel — Groupe qui contiendra le modèle GLB
+  const mesh = new THREE.Group();
   scene.add(mesh);
 
-  // Anneau décoratif
-  const ringGeo = new THREE.TorusGeometry(0.22, 0.03, 8, 24);
-  const ringMat = new THREE.MeshLambertMaterial({ color: 0xcc9900 });
-  const ring = new THREE.Mesh(ringGeo, ringMat);
-  ring.rotation.x = Math.PI / 2;
-  mesh.add(ring);
+  const loader = new GLTFLoader();
+  loader.load('Img/frisbee.glb', (gltf) => {
+    const model = gltf.scene;
+    // Ajustements visuels du modèle
+    model.scale.setScalar(0.7); // Réduire la taille de la boîte à pizza
+    model.traverse(child => {
+      if (child.isMesh) {
+        child.castShadow = true;
+        child.receiveShadow = true;
+      }
+    });
+    mesh.add(model);
+    console.log('Frisbee GLB chargé ✔');
+  }, undefined, (err) => {
+    console.error('Erreur chargement frisbee.glb, fallback visuel activé');
+    const geo = new THREE.CylinderGeometry(0.28, 0.28, 0.07, 0, 24);
+    const mat = new THREE.MeshLambertMaterial({ color: COLOR_FRISBEE });
+    const fallback = new THREE.Mesh(geo, mat);
+    mesh.add(fallback);
+  });
 
   // Physique Rapier — corps dynamique avec CCD activé pour éviter le tunneling
   const bodyDesc = RAPIER.RigidBodyDesc.dynamic()

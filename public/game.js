@@ -900,13 +900,13 @@ function gameLoop(timestamp) {
 
     // Gravité
     p.vel.y = Math.max(p.vel.y - 20 * dt, -20);
-    
+
     // Mouvement avec CharacterController
     const desired = { x: p.vel.x * dt, y: p.vel.y * dt, z: p.vel.z * dt };
     p.charCtrl.computeColliderMovement(p.collider, desired);
     const moved = p.charCtrl.computedMovement();
     if (p.charCtrl.computedGrounded()) p.vel.y = 0;
-    
+
     const newPos = { x: pos.x + moved.x, y: pos.y + moved.y, z: pos.z + moved.z };
     p.body.setNextKinematicTranslation(newPos);
     p.mesh.position.set(newPos.x, newPos.y, newPos.z);

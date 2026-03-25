@@ -475,8 +475,8 @@ function updateLobbyUI() {
   const listB = Object.values(players).filter(p => p.team === 'B').map(p => p.pseudo);
   const lobbyA = document.getElementById('lobby-team-a');
   const lobbyB = document.getElementById('lobby-team-b');
-  if (lobbyA) lobbyA.innerHTML = listA.map(n => `<div class="lobby-player">🔵 ${escapeHtml(n)}</div>`).join('') || '<div class="lobby-empty">—</div>';
-  if (lobbyB) lobbyB.innerHTML = listB.map(n => `<div class="lobby-player">🔴 ${escapeHtml(n)}</div>`).join('') || '<div class="lobby-empty">—</div>';
+  if (lobbyA) lobbyA.innerHTML = listA.map(n => `<div class="lobby-entry">${escapeHtml(n)}</div>`).join('') || '<div class="lobby-empty">—</div>';
+  if (lobbyB) lobbyB.innerHTML = listB.map(n => `<div class="lobby-entry">${escapeHtml(n)}</div>`).join('') || '<div class="lobby-empty">—</div>';
   const count = document.getElementById('lobby-count');
   if (count) count.textContent = `${Object.keys(players).length} joueur(s) connecté(s)`;
 }
@@ -817,8 +817,7 @@ fetch('/api/ip')
   .then(r => r.json())
   .then(data => {
     const url = `http://${data.ip}:${data.port}/controller`;
-    document.getElementById('lobby-url-text').textContent = url;
-    generateQR(document.getElementById('lobby-qr-code'), url, 140);
+    generateQR(document.getElementById('lobby-qr-code'), url, 200);
   })
   .catch(console.error);
 

@@ -1,3 +1,19 @@
+/* ── VARIABLES DE STYLE ── */
+:root {
+  --yellow: #faed36;
+  --yellow2: rgba(224, 210, 5, 0.25);
+  --black: #181a00;
+  --white: #fefce1;
+  --shadows: #2f3300;
+  --font-title: 'Boldonse', serif;
+  --font-body: var(--font-title);
+}
+
+@font-face {
+  font-family: 'Boldonse';
+  src: url('fonts/Boldonse.woff2') format('woff2');
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -121,79 +137,92 @@ canvas {
   display: none;
   position: fixed;
   inset: 0;
-  background: rgba(10, 12, 25, 0.96);
+  background: conic-gradient(var(--yellow2) 90deg,
+      transparent 90deg 180deg,
+      var(--yellow2) 180deg 270deg,
+      transparent 270deg), var(--yellow);
+  background-repeat: repeat;
+  background-size: 40px 40px;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 30px;
   z-index: 30;
-  font-family: monospace;
+  font-family: var(--font-title);
 }
 
-#lobby-overlay h2 {
-  font-size: 2.4em;
-  color: #FFD700;
-  letter-spacing: 3px;
+#lobby-logo {
+  width: 100%;
+  max-width: 600px;
+  margin-bottom: 0rem;
 }
 
 #lobby-count {
-  font-size: 0.9em;
-  color: #666;
-}
-
-.lobby-teams {
-  display: flex;
-  gap: 40px;
-}
-
-.lobby-team-block {
-  width: 200px;
-}
-
-.lobby-team-title {
-  font-size: 1em;
-  font-weight: bold;
-  margin-bottom: 10px;
-  padding: 6px 12px;
-  border-radius: 8px;
+  font-size: 1.8rem;
+  color: var(--black);
+  margin-bottom: 2rem;
   text-align: center;
+  letter-spacing: -0.04em;
 }
 
-#lobby-title-a {
-  background: rgba(52, 152, 219, 0.25);
-  color: #3498db;
+.lobby-layout {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 1.5rem;
+  width: 100%;
+  max-width: 600px;
+  justify-content: center;
 }
 
-#lobby-title-b {
-  background: rgba(231, 76, 60, 0.25);
-  color: #e74c3c;
+.lobby-tables {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  flex: 1; 
 }
 
-#lobby-team-a,
-#lobby-team-b {
+.lobby-col {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  min-height: 60px;
 }
 
-.lobby-player {
-  font-size: 0.95em;
-  color: #ddd;
-  padding: 4px 8px;
-  background: rgba(255, 255, 255, 0.06);
-  border-radius: 6px;
+.lobby-header {
+  background: var(--black);
+  color: var(--white);
+  font-size: 1.2rem;
+  text-align: left;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem 0.5rem 0 0;
+  text-transform: uppercase;
+}
+
+.lobby-list-container {
+  background: rgba(254, 252, 225, 0.4); 
+  padding: 0.5rem;
+  border-radius: 0 0 0.5rem 0.5rem;
+  min-height: 14rem;
+}
+
+.lobby-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.lobby-entry {
+  background: var(--white);
+  color: var(--black);
+  padding: 0.6rem 1rem;
+  border-radius: 0.25rem;
+  font-size: 1.1rem;
+  text-align: left;
+  font-weight: bold;
 }
 
 .lobby-empty {
-  font-size: 0.85em;
+  font-size: 1rem;
   color: #444;
-  padding: 4px 8px;
-}
-
-.lobby-hint {
-  font-size: 0.8em;
-  color: #555;
+  padding: 0.5rem;
   text-align: center;
 }
 
@@ -229,26 +258,30 @@ canvas {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  margin-top: -10px;
-  margin-bottom: 5px;
+  gap: 6px;
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 10px;
+  border-radius: 10px;
+}
+
+#lobby-qr-label {
+  font-family: var(--font-title);
+  font-size: 11px;
+  color: var(--black);
+  font-weight: bold;
+  text-transform: uppercase;
 }
 
 #lobby-qr-code {
-  width: 130px;
-  height: 130px;
-  border-radius: 8px;
-  border: 4px solid #fff;
-}
-
-#lobby-url-text {
-  font-size: 0.9em;
-  color: #FFD700;
-  font-weight: bold;
-  background: rgba(255, 215, 0, 0.1);
-  padding: 4px 10px;
+  background: white;
+  padding: 4px;
   border-radius: 6px;
 }
+
+
 
 /* ── FIN DE PARTIE ───────────────────────────── */
 #end-overlay {

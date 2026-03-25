@@ -349,7 +349,7 @@ function spawnPlayer(pseudo, team, isHost) {
     const box = new THREE.Box3().setFromObject(model);
     const center = box.getCenter(new THREE.Vector3());
     model.position.sub(center);
-    model.rotation.y = Math.PI; // tourner le modèle face à la caméra
+    model.rotation.y = Math.PI / 2; // tourner le modèle de 90° pour aligner avec la direction
     model.traverse(child => {
       if (child.isMesh) {
         child.castShadow = true;

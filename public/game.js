@@ -349,6 +349,7 @@ function spawnPlayer(pseudo, team, isHost) {
     const box = new THREE.Box3().setFromObject(model);
     const center = box.getCenter(new THREE.Vector3());
     model.position.sub(center);
+    model.rotation.y = Math.PI; // tourner le modèle face à la caméra
     model.traverse(child => {
       if (child.isMesh) {
         child.castShadow = true;
@@ -946,7 +947,7 @@ function gameLoop(timestamp) {
 
     // Indicateur frisbee (halo doré) + flèche de visée
     if (frisbeeOwner === pseudo) {
-      mesh.traverse(c => { if (c.isMesh && c.material && c.material.emissive) c.material.emissive.setHex(0x332200); });
+      p.mesh.traverse(c => { if (c.isMesh && c.material && c.material.emissive) c.material.emissive.setHex(0x332200); });
       // Flèche visible, rotation absolue sur Y = -p.mireAngle
       if (p.aimPivot) {
         p.aimPivot.visible = true;

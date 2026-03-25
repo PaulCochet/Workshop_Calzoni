@@ -1,56 +1,342 @@
-window._p5play_intro_image = '';
+// =============================================================================
+//  GAME.JS – Ulti-mates v3 — Three.js + Rapier (remplace p5play)
+//
+//  Architecture :
+//    • Three.js  → rendu 3D (scène, caméra, lumières, meshes)
+//    • Rapier    → physique et collisions (côté grand écran)
+//    • Socket    → relay WebSocket inchangé (server.js intact)
+//    • controller.js → intact, aucun changement
+// =============================================================================
+
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.150.1/build/three.module.js';
+import { GLTFLoader }    from 'https://cdn.jsdelivr.net/npm/three@0.150.1/examples/jsm/loaders/GLTFLoader.js';
+import { CSS2DRenderer, CSS2DObject }
+                         from 'https://cdn.jsdelivr.net/npm/three@0.150.1/examples/jsm/renderers/CSS2DRenderer.js';
+import RAPIER            from 'https://cdn.jsdelivr.net/npm/@dimforge/rapier3d-compat@0.11.2/rapier.es.js';
 
 // =============================================================================
-//  GAME.JS – Ulti-mates v2. CACA
+//  CONSTANTES
 // =============================================================================
+const PLAYER_SPEED    = 8;
+const STUN_DURATION   = 3;       // secondes
+const GAME_DURATION   = 140;     // secondes
+const FRISBEE_SPEED   = 18;      // force d'impulsion au lancer
+const FRISBEE_HEIGHT  = 0.6;     // hauteur fixe du frisbee au-dessus du sol
+const GRAB_RADIUS     = 3.0;     // distance max pour attraper
+const GRAB_DURATION   = 2;       // secondes
+const THROW_COOLDOWN  = 0.6;
+const KNOCKBACK_FORCE = 12;
+const FRISBEE_DAMPING = 1.8;     // résistance air du frisbee
+const MAP_SCALE       = 1.1;     // Échelle augmentée pour voir la map en grand
 
-// --- CONSTANTES --------------------------------------------------------------
-const PLAYER_RADIUS = 20;
-const PLAYER_SPEED = 6.0;
-const STUN_DURATION = 3;
-const GAME_DURATION = 140;
-const FRISBEE_SPEED = 24;
-const FRISBEE_RADIUS = 12;
-const THROW_COOLDOWN = 0.6;
-const FRISBEE_FRICTION = 0.98; // Frottement dans l'air pendant 4s
-const GRAB_RADIUS = 55;
-const GRAB_DURATION = 2;
-const MIRE_SPEED = 4.5;
-const KNOCKBACK_FORCE = 16; // Impulsion de recul quand on est attrapé
+const COLOR_A = 0x3498db;
+const COLOR_B = 0xe74c3c;
+const COLOR_FRISBEE = 0xFFD700;
 
-const COLOR_TEAM_A = [52, 152, 219];
-const COLOR_TEAM_B = [231, 76, 60];
-
-// --- ÉTAT -------------------------------------------------------------------
-const players = {};
-let frisbee = null;
-let frisbeeOwner = null;
+// =============================================================================
+//  ÉTAT DU JEU
+// =============================================================================
+const players = {};         // pseudo → { mesh, body, label, team, ... }
+let frisbee   = null;       // { mesh, body }
+let frisbeeOwner       = null;
 let frisbeeLastThrower = null;
-let frisbeeTimer = 0;
 
-let gamePhase = 'lobby'; // 'lobby' | 'playing' | 'ended'
-let gameTimer = GAME_DURATION;
-let scoreA = 0;
-let scoreB = 0;
+let gamePhase  = 'lobby';   // 'lobby' | 'playing' | 'ended'
+let gameTimer  = GAME_DURATION;
+let scoreA = 0, scoreB = 0;
+let lastTimestamp = 0;
+
 let ws;
-let obstacles = [];
 
 // =============================================================================
-//  WEBSOCKET
+//  THREE.JS — SETUP
+// =============================================================================
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(window.devicePixelRatio);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type    = THREE.PCFSoftShadowMap;
+renderer.setClearColor(0x111111);
+document.body.insertBefore(renderer.domElement, document.body.firstChild);
+
+// CSS2D pour les labels joueurs (noms au-dessus des persos)
+const labelRenderer = new CSS2DRenderer();
+labelRenderer.setSize(window.innerWidth, window.innerHeight);
+labelRenderer.domElement.style.position = 'absolute';
+labelRenderer.domElement.style.top = '0';
+labelRenderer.domElement.style.pointerEvents = 'none';
+document.body.appendChild(labelRenderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x111111);
+scene.fog = new THREE.Fog(0x111111, 20, 60);
+
+// Caméra — vue isométrique style Overcooked
+const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 200);
+camera.position.set(0, 16, 12);
+camera.lookAt(0, 0, 0);
+
+// Lumières
+const ambient = new THREE.AmbientLight(0xffffff, 0.5);
+scene.add(ambient);
+
+const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+dirLight.position.set(8, 16, 8);
+dirLight.castShadow = true;
+dirLight.shadow.mapSize.set(2048, 2048);
+dirLight.shadow.camera.near = 0.5;
+dirLight.shadow.camera.far  = 80;
+dirLight.shadow.camera.left = dirLight.shadow.camera.bottom = -20;
+dirLight.shadow.camera.right = dirLight.shadow.camera.top   =  20;
+scene.add(dirLight);
+
+// Lumière de remplissage douce
+const fillLight = new THREE.DirectionalLight(0x8899ff, 0.3);
+fillLight.position.set(-5, 5, -5);
+scene.add(fillLight);
+
+// Sol de secours (visible si la map ne charge pas)
+const floorGeo = new THREE.PlaneGeometry(30, 20);
+const floorMat = new THREE.MeshLambertMaterial({ color: 0x1a1a2e });
+const floor = new THREE.Mesh(floorGeo, floorMat);
+floor.rotation.x = -Math.PI / 2;
+floor.receiveShadow = true;
+scene.add(floor);
+
+// =============================================================================
+//  RAPIER — INIT (await top-level possible dans un ES module)
+// =============================================================================
+await RAPIER.init();
+const world = new RAPIER.World({ x: 0, y: -25, z: 0 });
+
+// =============================================================================
+//  CHARGEMENT DE LA MAP GLB
+// =============================================================================
+function loadMap() {
+  const loader = new GLTFLoader();
+  loader.load(
+    'Img/workshop_map.glb',
+
+    (gltf) => {
+      gltf.scene.scale.setScalar(MAP_SCALE);
+      gltf.scene.traverse(child => {
+        if (child.isMesh) {
+          child.castShadow    = true;
+          child.receiveShadow = true;
+        }
+      });
+      scene.add(gltf.scene);
+
+      // ── Créer les colliders Rapier à partir des objets "col_" ──
+      let colFound = false;
+      gltf.scene.traverse((child) => {
+        if (!child.isMesh) return;
+        if (!child.name.startsWith('col_')) return;
+
+        colFound = true;
+        child.visible = false; // invisible, juste pour la physique
+
+        const geo = child.geometry;
+        if (!geo.index) return;
+
+        // Récupérer les vertices en world space (scale appliqué)
+        const posAttr = geo.attributes.position;
+        const verts = new Float32Array(posAttr.count * 3);
+        const worldVec = new THREE.Vector3();
+        for (let i = 0; i < posAttr.count; i++) {
+          worldVec.fromBufferAttribute(posAttr, i);
+          child.localToWorld(worldVec);
+          verts[i * 3]     = worldVec.x;
+          verts[i * 3 + 1] = worldVec.y;
+          verts[i * 3 + 2] = worldVec.z;
+        }
+        const indices = new Uint32Array(geo.index.array);
+
+        const desc = RAPIER.ColliderDesc.trimesh(verts, indices);
+        world.createCollider(desc);
+      });
+
+      if (!colFound) {
+        // Aucun objet col_ trouvé → fallback colliders simples
+        console.warn('Aucun objet "col_" trouvé dans la map — colliders de fallback activés.');
+        createFallbackColliders();
+      }
+
+      console.log('Map GLB chargée ✔');
+    },
+
+    undefined,
+    (err) => {
+      console.error('Erreur chargement map :', err);
+      createFallbackColliders();
+    }
+  );
+}
+
+function createFallbackColliders() {
+  // Sol
+  const groundDesc = RAPIER.ColliderDesc.cuboid(15, 0.2, 10).setTranslation(0, -0.2, 0);
+  world.createCollider(groundDesc);
+  // Murs
+  [
+    RAPIER.ColliderDesc.cuboid(0.3, 3, 10).setTranslation(-15,  1.5, 0),
+    RAPIER.ColliderDesc.cuboid(0.3, 3, 10).setTranslation( 15,  1.5, 0),
+    RAPIER.ColliderDesc.cuboid(15,  3, 0.3).setTranslation(0,   1.5, -10),
+    RAPIER.ColliderDesc.cuboid(15,  3, 0.3).setTranslation(0,   1.5,  10),
+  ].forEach(d => world.createCollider(d));
+}
+
+// =============================================================================
+//  FRISBEE
+// =============================================================================
+function createFrisbee() {
+  // Mesh visuel — disque jaune
+  const geo  = new THREE.CylinderGeometry(0.28, 0.28, 0.07, 24);
+  const mat  = new THREE.MeshLambertMaterial({ color: COLOR_FRISBEE, emissive: 0x443300 });
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.castShadow = true;
+  scene.add(mesh);
+
+  // Anneau décoratif
+  const ringGeo = new THREE.TorusGeometry(0.22, 0.03, 8, 24);
+  const ringMat = new THREE.MeshLambertMaterial({ color: 0xcc9900 });
+  const ring = new THREE.Mesh(ringGeo, ringMat);
+  ring.rotation.x = Math.PI / 2;
+  mesh.add(ring);
+
+  // Physique Rapier — corps dynamique avec damping élevé
+  const bodyDesc = RAPIER.RigidBodyDesc.dynamic()
+    .setTranslation(0, FRISBEE_HEIGHT, 0)
+    .setLinearDamping(FRISBEE_DAMPING)
+    .setAngularDamping(5.0);
+  const body = world.createRigidBody(bodyDesc);
+  world.createCollider(
+    RAPIER.ColliderDesc.cylinder(0.035, 0.28)
+      .setRestitution(0.6)
+      .setFriction(0.2),
+    body
+  );
+
+  frisbee = { mesh, body };
+  resetFrisbee();
+}
+
+function resetFrisbee() {
+  frisbee.body.setTranslation({ x: 0, y: FRISBEE_HEIGHT, z: 0 }, true);
+  frisbee.body.setLinvel({ x: 0, y: 0, z: 0 }, true);
+  frisbee.body.setAngvel({ x: 0, y: 0, z: 0 }, true);
+  frisbeeOwner = null;
+  frisbeeLastThrower = null;
+}
+
+// =============================================================================
+//  JOUEURS
+// =============================================================================
+function spawnPlayer(pseudo, team, isHost) {
+  if (players[pseudo]) return;
+
+  const color = team === 'A' ? COLOR_A : COLOR_B;
+  const startX = team === 'A'
+    ? -4 + Math.random() * 2
+    :  4 - Math.random() * 2;
+  const startZ = (Math.random() - 0.5) * 4;
+
+  // ── Mesh joueur : capsule colorée ──
+  const bodyGeo = new THREE.CapsuleGeometry(0.38, 0.7, 4, 12);
+  const bodyMat = new THREE.MeshLambertMaterial({ color });
+  const mesh    = new THREE.Mesh(bodyGeo, bodyMat);
+  mesh.castShadow = true;
+
+  // Yeux (petites sphères blanches pour l'expressivité)
+  const eyeGeo = new THREE.SphereGeometry(0.07, 8, 8);
+  const eyeMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
+  const eyeL   = new THREE.Mesh(eyeGeo, eyeMat);
+  const eyeR   = new THREE.Mesh(eyeGeo, eyeMat);
+  eyeL.position.set(-0.15, 0.25, 0.32);
+  eyeR.position.set( 0.15, 0.25, 0.32);
+  mesh.add(eyeL, eyeR);
+
+  scene.add(mesh);
+
+  // ── Label CSS2D (nom au-dessus) ──
+  const div = document.createElement('div');
+  div.className = 'player-label';
+  div.textContent = pseudo + (isHost ? ' 👑' : '');
+  div.style.cssText = `
+    color: white;
+    font-family: monospace;
+    font-size: 13px;
+    font-weight: bold;
+    text-shadow: 0 1px 4px #000, 0 0 8px #000;
+    pointer-events: none;
+    white-space: nowrap;
+  `;
+  const label = new CSS2DObject(div);
+  label.position.set(0, 1.2, 0);
+  mesh.add(label);
+
+  // ── Physique Rapier — capsule ──
+  const bodyDesc = RAPIER.RigidBodyDesc.dynamic()
+    .setTranslation(startX, 1.2, startZ)
+    .lockRotations();  // le perso ne tombe pas
+  const rbody = world.createRigidBody(bodyDesc);
+  world.createCollider(
+    RAPIER.ColliderDesc.capsule(0.35, 0.38)
+      .setFriction(0.5)
+      .setRestitution(0.1),
+    rbody
+  );
+
+  players[pseudo] = {
+    pseudo, team, isHost: isHost || false,
+    mesh, body: rbody, label: div,
+    stunned: false, stunTimer: 0,
+    grabbed: false, grabTimer: 0, grabbedBy: null,
+    inputDir: { x: 0, z: 0 },
+    lastThrowTime: 0,
+    mireAngle: 0,
+  };
+}
+
+function removePlayer(pseudo) {
+  const p = players[pseudo];
+  if (!p) return;
+  scene.remove(p.mesh);
+  world.removeRigidBody(p.body);
+  if (frisbeeOwner === pseudo) frisbeeOwner = null;
+  delete players[pseudo];
+}
+
+function placePlayerOnMap(p) {
+  const isA = p.team === 'A';
+  const x = isA
+    ? -4 + Math.random() * 3
+    :  4 - Math.random() * 3;
+  const z = (Math.random() - 0.5) * 5;
+  p.body.setTranslation({ x, y: 1.5, z }, true);
+  p.body.setLinvel({ x: 0, y: 0, z: 0 }, true);
+}
+
+// =============================================================================
+//  WEBSOCKET — identique à l'original
 // =============================================================================
 function connectWebSocket() {
   const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
   ws = new WebSocket(`${protocol}//${location.host}`);
-  ws.onopen = () => setConnectionStatus('Connecté ✔', true);
-  ws.onclose = () => { setConnectionStatus('Déconnecté…', false); setTimeout(connectWebSocket, 2000); };
+  ws.onopen  = () => setConnectionStatus('Connecté ✔', true);
+  ws.onclose = () => {
+    setConnectionStatus('Déconnecté…', false);
+    setTimeout(connectWebSocket, 2000);
+  };
   ws.onmessage = (event) => {
-    let msg; try { msg = JSON.parse(event.data); } catch (e) { return; }
-    if (msg.type === 'spawn') handleSpawn(msg);
-    else if (msg.type === 'move') handleMove(msg);
-    else if (msg.type === 'throw') handleThrow(msg);
-    else if (msg.type === 'grab') handleGrab(msg);
+    let msg;
+    try { msg = JSON.parse(event.data); } catch (e) { return; }
+    if      (msg.type === 'spawn')     handleSpawn(msg);
+    else if (msg.type === 'move')      handleMove(msg);
+    else if (msg.type === 'throw')     handleThrow(msg);
+    else if (msg.type === 'grab')      handleGrab(msg);
     else if (msg.type === 'startGame') startGame();
-    else if (msg.type === 'getState') handleGetState();
+    else if (msg.type === 'getState')  handleGetState();
   };
 }
 
@@ -65,13 +351,12 @@ function setConnectionStatus(text, ok) {
 }
 
 // =============================================================================
-//  HANDLERS
+//  HANDLERS (logique inchangée, adaptée 3D)
 // =============================================================================
 function handleSpawn(msg) {
   if (players[msg.pseudo]) return;
   spawnPlayer(msg.pseudo, msg.team, msg.isHost);
   if (gamePhase === 'playing') {
-    // Late join: place the player on the map immediately and notify them
     placePlayerOnMap(players[msg.pseudo]);
     broadcast({ type: 'gameStarted' });
   } else {
@@ -82,28 +367,33 @@ function handleSpawn(msg) {
 function handleMove(msg) {
   const p = players[msg.pseudo];
   if (!p || p.stunned || p.grabbed) return;
-  p.inputDir = { x: msg.dir.x, y: msg.dir.y };
+  // dir.x → X monde, dir.y du joystick → Z monde (profondeur)
+  p.inputDir.x = msg.dir.x;
+  p.inputDir.z = msg.dir.y;
 }
 
 function handleThrow(msg) {
   const p = players[msg.pseudo];
   if (!p || p.stunned) return;
   if (frisbeeOwner !== msg.pseudo) return;
-  if ((millis() / 1000) - p.lastThrowTime < THROW_COOLDOWN) return;
+
+  const now = performance.now() / 1000;
+  if (now - p.lastThrowTime < THROW_COOLDOWN) return;
+  p.lastThrowTime = now;
 
   frisbeeLastThrower = msg.pseudo;
   frisbeeOwner = null;
-  frisbee.collider = 'dynamic';
-  const throwRadius = PLAYER_RADIUS * 2;
-  frisbee.x = p.sprite.x + cos(p.mireAngle) * (throwRadius + FRISBEE_RADIUS + 2);
-  frisbee.y = p.sprite.y + sin(p.mireAngle) * (throwRadius + FRISBEE_RADIUS + 2);
-  frisbee.vel.x = cos(p.mireAngle) * FRISBEE_SPEED;
-  frisbee.vel.y = sin(p.mireAngle) * FRISBEE_SPEED;
-  p.lastThrowTime = millis() / 1000;
-  frisbeeTimer = 2.0; // Vole exactement pendant 2 secondes maximum
+
+  // Lancer dans la direction de la mire (XZ)
+  const pos = p.body.translation();
+  const vx = Math.cos(p.mireAngle) * FRISBEE_SPEED;
+  const vz = Math.sin(p.mireAngle) * FRISBEE_SPEED;
+
+  frisbee.body.setTranslation({ x: pos.x + Math.cos(p.mireAngle) * 0.8, y: FRISBEE_HEIGHT, z: pos.z + Math.sin(p.mireAngle) * 0.8 }, true);
+  frisbee.body.setLinvel({ x: vx, y: 0, z: vz }, true);
+
   broadcast({ type: 'frisbeeDropped' });
 }
-
 
 function handleGrab(msg) {
   const grabber = players[msg.pseudo];
@@ -112,40 +402,55 @@ function handleGrab(msg) {
 
   let closest = null;
   let closestDist = GRAB_RADIUS;
+  const gPos = grabber.body.translation();
 
   for (const id in players) {
-    const target = players[id];
     if (id === msg.pseudo) continue;
+    const target = players[id];
     if (target.team === grabber.team) continue;
     if (target.stunned || target.grabbed) continue;
-    const dist = Math.hypot(grabber.sprite.x - target.sprite.x, grabber.sprite.y - target.sprite.y);
+    const tPos = target.body.translation();
+    const dist = Math.hypot(gPos.x - tPos.x, gPos.z - tPos.z);
     if (dist < closestDist) { closestDist = dist; closest = id; }
   }
 
   if (closest) {
     const target = players[closest];
-    target.grabbed = true;
+    target.grabbed   = true;
     target.grabTimer = GRAB_DURATION;
     target.grabbedBy = msg.pseudo;
-    target.inputDir = { x: 0, y: 0 };
+    target.inputDir  = { x: 0, z: 0 };
 
-    // Calcul du vecteur de recul (direction opposée au grabber)
-    const dx = target.sprite.x - grabber.sprite.x;
-    const dy = target.sprite.y - grabber.sprite.y;
-    const dist = Math.hypot(dx, dy) || 1;
-    target.sprite.vel.x = (dx / dist) * KNOCKBACK_FORCE;
-    target.sprite.vel.y = (dy / dist) * KNOCKBACK_FORCE;
+    // Knockback (direction opposée au grabber)
+    const tPos = target.body.translation();
+    const dx = tPos.x - gPos.x;
+    const dz = tPos.z - gPos.z;
+    const d  = Math.hypot(dx, dz) || 1;
+    target.body.setLinvel({
+      x: (dx / d) * KNOCKBACK_FORCE,
+      y: 0,
+      z: (dz / d) * KNOCKBACK_FORCE
+    }, true);
 
-    if (frisbeeOwner === closest) { frisbeeOwner = null; frisbee.collider = 'dynamic'; broadcast({ type: 'frisbeeDropped' }); }
+    if (frisbeeOwner === closest) {
+      frisbeeOwner = null;
+      broadcast({ type: 'frisbeeDropped' });
+    }
     broadcast({ type: 'grabbed', pseudo: closest, by: msg.pseudo });
   }
+}
+
+function handleGetState() {
+  if (gamePhase === 'playing') broadcast({ type: 'gameStarted' });
 }
 
 // =============================================================================
 //  LOBBY
 // =============================================================================
 function broadcastLobbyState() {
-  const lobbyData = Object.values(players).map(p => ({ pseudo: p.pseudo, team: p.team, isHost: p.isHost || false }));
+  const lobbyData = Object.values(players).map(p => ({
+    pseudo: p.pseudo, team: p.team, isHost: p.isHost
+  }));
   broadcast({ type: 'lobbyState', players: lobbyData });
   updateLobbyUI();
 }
@@ -161,13 +466,9 @@ function updateLobbyUI() {
   if (count) count.textContent = `${Object.keys(players).length} joueur(s) connecté(s)`;
 }
 
-function handleGetState() {
-  // Respond to a controller that just connected mid-game
-  if (gamePhase === 'playing') {
-    broadcast({ type: 'gameStarted' });
-  }
-}
-
+// =============================================================================
+//  DÉMARRER / FINIR LA PARTIE
+// =============================================================================
 function startGame() {
   if (gamePhase === 'playing') return;
   gamePhase = 'playing';
@@ -179,207 +480,47 @@ function startGame() {
   showIngameQR();
 
   for (const pseudo in players) placePlayerOnMap(players[pseudo]);
-
-  frisbee.x = width / 2; frisbee.y = height / 2;
-  frisbee.vel.x = 0; frisbee.vel.y = 0;
-  frisbeeOwner = null; frisbeeLastThrower = null;
-  frisbeeTimer = 0;
-  frisbee.collider = 'dynamic';
-
+  resetFrisbee();
   broadcast({ type: 'gameStarted' });
   updateScoreboard();
-}
-
-function showIngameQR() {
-  const el = document.getElementById('ingame-qr');
-  const container = document.getElementById('ingame-qr-code');
-  if (!el || !container) return;
-  // Only generate once
-  if (container.childElementCount > 0) { el.style.display = 'flex'; return; }
-  fetch('/api/ip')
-    .then(r => r.json())
-    .then(data => {
-      const url = `http://${data.ip}:${data.port}/controller`;
-      new QRCode(container, {
-        text: url,
-        width: 80,
-        height: 80,
-        colorDark: '#000000',
-        colorLight: '#ffffff',
-        correctLevel: QRCode.CorrectLevel.L
-      });
-      el.style.display = 'flex';
-    })
-    .catch(console.error);
-}
-
-function placePlayerOnMap(p) {
-  const isA = p.team === 'A';
-  p.sprite.x = isA ? random(80, width * 0.35) : random(width * 0.65, width - 80);
-  p.sprite.y = random(100, height - 100);
-  p.sprite.vel.x = 0; p.sprite.vel.y = 0;
-}
-
-// =============================================================================
-//  JOUEURS
-// =============================================================================
-function spawnPlayer(pseudo, team, isHost) {
-  if (players[pseudo]) return;
-  const col = team === 'A' ? color(...COLOR_TEAM_A) : color(...COLOR_TEAM_B);
-  const sx = team === 'A' ? random(80, width * 0.35) : random(width * 0.65, width - 80);
-  const sy = random(100, height - 100);
-
-  const ball = new Sprite(sx, sy, PLAYER_RADIUS * 2, 'dynamic');
-  ball.color = col; ball.stroke = color(255, 255, 255, 160);
-  ball.strokeWeight = 2; ball.bounciness = 0.3;
-  ball.friction = 0.1; ball.mass = 1; ball.rotationLock = true;
-
-  players[pseudo] = {
-    pseudo, team, isHost: isHost || false, sprite: ball, color: col,
-    stunned: false, stunTimer: 0,
-    grabbed: false, grabTimer: 0, grabbedBy: null,
-    inputDir: { x: 0, y: 0 }, lastThrowTime: 0,
-    mireAngle: 0
-  };
-}
-
-function removePlayer(pseudo) {
-  const p = players[pseudo];
-  if (!p) return;
-  if (frisbeeOwner === pseudo) frisbeeOwner = null;
-  p.sprite.remove();
-  delete players[pseudo];
 }
 
 function stunPlayer(pseudo) {
   const p = players[pseudo];
   if (!p || p.stunned) return;
-  p.stunned = true; p.stunTimer = STUN_DURATION;
-  p.inputDir = { x: 0, y: 0 }; p.grabbed = false;
+  p.stunned   = true;
+  p.stunTimer = STUN_DURATION;
+  p.inputDir  = { x: 0, z: 0 };
+  p.grabbed   = false;
   if (p.team === 'A') scoreB++; else scoreA++;
-  if (frisbeeOwner === pseudo) { frisbeeOwner = null; frisbee.collider = 'dynamic'; broadcast({ type: 'frisbeeDropped' }); }
+  if (frisbeeOwner === pseudo) {
+    frisbeeOwner = null;
+    broadcast({ type: 'frisbeeDropped' });
+  }
   broadcast({ type: 'stunned', pseudo });
   updateScoreboard();
 }
 
-// =============================================================================
-//  FRISBEE
-// =============================================================================
-function createFrisbee() {
-  frisbee = new Sprite(width / 2, height / 2, FRISBEE_RADIUS * 2, 'dynamic');
-  frisbee.color = color(255, 220, 50); frisbee.stroke = color(200, 160, 0);
-  frisbee.strokeWeight = 2; frisbee.bounciness = 0.55;
-  frisbee.friction = 0.04; frisbee.mass = 0.3; frisbee.rotationLock = false;
+function showEndScreen() {
+  document.getElementById('final-a').textContent = scoreA;
+  document.getElementById('final-b').textContent = scoreB;
+  document.getElementById('end-winner').textContent =
+    scoreA > scoreB ? '🏆 Équipe A gagne !'
+    : scoreB > scoreA ? '🏆 Équipe B gagne !'
+    : '🤝 Égalité !';
+  document.getElementById('end-overlay').style.display = 'flex';
 
-  frisbee.draw = function () {
-    push();
-    fill(255, 220, 50); stroke(200, 160, 0); strokeWeight(2);
-    circle(0, 0, FRISBEE_RADIUS * 2);
-    rotate(frameCount * 0.06);
-    noFill(); stroke(200, 160, 0, 160); strokeWeight(1.5);
-    arc(0, 0, FRISBEE_RADIUS * 1.3, FRISBEE_RADIUS * 1.3, 0, PI * 1.3);
-    pop();
+  document.getElementById('restart-btn').onclick = () => {
+    document.getElementById('end-overlay').style.display = 'none';
+    document.getElementById('lobby-overlay').style.display = 'flex';
+    document.getElementById('hud').style.display = 'none';
+    document.getElementById('ingame-qr').style.display = 'none';
+    gamePhase = 'lobby'; scoreA = scoreB = 0; gameTimer = GAME_DURATION;
+    for (const p in players) removePlayer(p);
+    resetFrisbee();
+    updateLobbyUI();
+    broadcast({ type: 'returnToLobby' });
   };
-}
-
-function updateFrisbee(dt) {
-  if (!frisbee) return;
-  if (frisbeeOwner) {
-    const p = players[frisbeeOwner];
-    if (p) { frisbee.x = p.sprite.x; frisbee.y = p.sprite.y; frisbee.vel.x = 0; frisbee.vel.y = 0; }
-    else frisbeeOwner = null;
-    return;
-  }
-
-  if (frisbeeTimer > 0) {
-    frisbeeTimer -= dt;
-    frisbee.vel.x *= FRISBEE_FRICTION;
-    frisbee.vel.y *= FRISBEE_FRICTION;
-
-    if (frisbeeTimer <= 0) {
-      frisbeeTimer = 0;
-      frisbee.vel.x = 0;
-      frisbee.vel.y = 0;
-    }
-  } else {
-    frisbee.vel.x = 0;
-    frisbee.vel.y = 0;
-  }
-
-  // Collision with boundaries -> STOP dead
-  if (frisbee.x < FRISBEE_RADIUS) { frisbee.x = FRISBEE_RADIUS; frisbee.vel.x = 0; frisbee.vel.y = 0; frisbeeTimer = 0; }
-  if (frisbee.x > width - FRISBEE_RADIUS) { frisbee.x = width - FRISBEE_RADIUS; frisbee.vel.x = 0; frisbee.vel.y = 0; frisbeeTimer = 0; }
-  if (frisbee.y < FRISBEE_RADIUS) { frisbee.y = FRISBEE_RADIUS; frisbee.vel.y = 0; frisbee.vel.y = 0; frisbeeTimer = 0; }
-  if (frisbee.y > height - FRISBEE_RADIUS) { frisbee.y = height - FRISBEE_RADIUS; frisbee.vel.y = 0; frisbee.vel.y = 0; frisbeeTimer = 0; }
-
-  // Collision with static obstacles -> STOP dead
-  for (let obs of obstacles) {
-    if (frisbee.colliding(obs)) {
-      frisbee.vel.x = 0; frisbee.vel.y = 0;
-      frisbeeTimer = 0;
-    }
-  }
-
-  const spd = Math.hypot(frisbee.vel.x, frisbee.vel.y);
-
-  for (const pseudo in players) {
-    const p = players[pseudo];
-    if (p.stunned || p.grabbed) continue;
-    const dx = p.sprite.x - frisbee.x;
-    const dy = p.sprite.y - frisbee.y;
-    const dist = Math.hypot(dx, dy);
-    const currentRadius = p.sprite.d / 2;
-    if (dist < currentRadius + FRISBEE_RADIUS + 4) {
-      // 1. Check if hit by a fast-moving enemy throw
-      if (spd > 3 && frisbeeLastThrower && frisbeeLastThrower !== pseudo) {
-        const thrower = players[frisbeeLastThrower];
-        if (thrower && thrower.team !== p.team) {
-          stunPlayer(pseudo);
-          frisbee.collider = 'dynamic';
-          frisbee.vel.x = 0;
-          frisbee.vel.y = 0;
-          frisbeeTimer = 0;
-          continue; // Successfully stunned, move to next player
-        }
-      }
-
-      // 2. Otherwise auto-pickup if not currently owned // Add a 0.5s cooldown so the thrower doesn't instantly pick it up again
-      if (!frisbeeOwner && (frisbeeLastThrower !== pseudo || (millis() / 1000) - p.lastThrowTime > 0.5)) {
-        frisbeeOwner = pseudo;
-        frisbee.collider = 'none';
-        frisbee.vel.x = 0;
-        frisbee.vel.y = 0;
-        frisbeeTimer = 0;
-        broadcast({ type: 'hasFrisbee', pseudo: pseudo });
-      }
-    }
-  }
-}
-
-// =============================================================================
-//  MAP
-// =============================================================================
-function createMap() {
-  world.gravity.y = 0; world.gravity.x = 0;
-  const walls = [
-    new Sprite(width / 2, -10, width + 40, 20, 'static'),
-    new Sprite(width / 2, height + 10, width + 40, 20, 'static'),
-    new Sprite(-10, height / 2, 20, height + 40, 'static'),
-    new Sprite(width + 10, height / 2, 20, height + 40, 'static'),
-  ];
-  walls.forEach(w => { w.visible = false; w.bounciness = 0.6; });
-  const obsDefs = [
-    { x: width * 0.5, y: height * 0.22, w: 90, h: 90 },
-    { x: width * 0.5, y: height * 0.78, w: 90, h: 90 },
-    { x: width * 0.22, y: height * 0.5, w: 70, h: 130 },
-    { x: width * 0.78, y: height * 0.5, w: 70, h: 130 },
-  ];
-  obsDefs.forEach(def => {
-    const s = new Sprite(def.x, def.y, def.w, def.h, 'static');
-    s.color = color(50, 55, 75, 40); s.stroke = color(90, 100, 130, 0); s.strokeWeight = 0; s.bounciness = 0.4;
-    s.visible = false; // Hide the 2D rectangle so the 3D model is seen instead
-    obstacles.push(s);
-  });
 }
 
 // =============================================================================
@@ -389,187 +530,282 @@ function updateScoreboard() {
   const mins = Math.floor(gameTimer / 60);
   const secs = Math.floor(gameTimer % 60);
   const timerEl = document.getElementById('timer');
-  timerEl.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-  timerEl.className = gameTimer <= 10 ? 'danger' : '';
-  document.getElementById('score-a').textContent = scoreA;
-  document.getElementById('score-b').textContent = scoreB;
+  if (timerEl) {
+    timerEl.textContent = `${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
+    timerEl.className = gameTimer <= 10 ? 'danger' : '';
+  }
+  const elA = document.getElementById('score-a');
+  const elB = document.getElementById('score-b');
+  if (elA) elA.textContent = scoreA;
+  if (elB) elB.textContent = scoreB;
   const listA = Object.values(players).filter(p => p.team === 'A').map(p => p.pseudo);
   const listB = Object.values(players).filter(p => p.team === 'B').map(p => p.pseudo);
-  document.getElementById('players-a').textContent = listA.join(', ') || '—';
-  document.getElementById('players-b').textContent = listB.join(', ') || '—';
-}
-
-function escapeHtml(t) {
-  const d = document.createElement('div'); d.appendChild(document.createTextNode(t)); return d.innerHTML;
+  const pA = document.getElementById('players-a');
+  const pB = document.getElementById('players-b');
+  if (pA) pA.textContent = listA.join(', ') || '—';
+  if (pB) pB.textContent = listB.join(', ') || '—';
 }
 
 // =============================================================================
-//  SETUP
+//  QR CODE
 // =============================================================================
-function setup() {
-  new Canvas(windowWidth, windowHeight);
-  angleMode(RADIANS);
-  world.gravity.y = 0;
-  createMap();
-  createFrisbee();
-  document.getElementById('lobby-overlay').style.display = 'flex';
-  document.getElementById('hud').style.display = 'none';
-  connectWebSocket();
+function generateQR(container, url, size) {
+  if (!container) return;
+  container.innerHTML = '';
+  /* global QRCode */
+  new QRCode(container, {
+    text: url, width: size, height: size,
+    colorDark: '#000000', colorLight: '#ffffff',
+    correctLevel: QRCode.CorrectLevel.L
+  });
+}
 
+function showIngameQR() {
+  const el = document.getElementById('ingame-qr');
+  const container = document.getElementById('ingame-qr-code');
+  if (!el || !container || container.childElementCount > 0) {
+    if (el) el.style.display = 'flex';
+    return;
+  }
   fetch('/api/ip')
     .then(r => r.json())
     .then(data => {
-      // On utilise l'IP locale (data.ip) pour que les potes puissent se connecter
-      const controllerUrl = `http://${data.ip}:${data.port}/controller`;
-      document.getElementById('lobby-url-text').textContent = controllerUrl;
-
-      const qrContainer = document.getElementById('lobby-qr-container');
-      const oldImg = document.getElementById('lobby-qr-code');
-      if (oldImg) oldImg.remove();
-
-      const qrDiv = document.createElement('div');
-      qrDiv.id = 'lobby-qr-code';
-      qrDiv.style.background = 'white';
-      qrDiv.style.padding = '8px';
-      qrDiv.style.borderRadius = '8px';
-      qrDiv.style.display = 'inline-block';
-      qrContainer.insertBefore(qrDiv, document.getElementById('lobby-url-text'));
-
-      // Génération locale garantie 100% sans bug d'API
-      new QRCode(qrDiv, {
-        text: controllerUrl,
-        width: 140,
-        height: 140,
-        colorDark: "#000000",
-        colorLight: "#ffffff",
-        correctLevel: QRCode.CorrectLevel.L
-      });
+      generateQR(container, `http://${data.ip}:${data.port}/controller`, 80);
+      el.style.display = 'flex';
     })
     .catch(console.error);
 }
 
 // =============================================================================
-//  DRAW
+//  EFFETS VISUELS — particules de stun
 // =============================================================================
-function draw() {
-  clear(); // make the canvas transparent
-  const dt = deltaTime / 1000;
-  drawArena();
+const stunParticles = {}; // pseudo → THREE.Points
 
+function createStunEffect(pseudo) {
+  if (stunParticles[pseudo]) return;
+  const geo = new THREE.BufferGeometry();
+  const count = 8;
+  const pos = new Float32Array(count * 3);
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  const mat = new THREE.PointsMaterial({ color: 0xFFD700, size: 0.15 });
+  const points = new THREE.Points(geo, mat);
+  scene.add(points);
+  stunParticles[pseudo] = { points, t: 0 };
+}
+
+function updateStunEffect(pseudo, playerPos) {
+  const ef = stunParticles[pseudo];
+  if (!ef) return;
+  ef.t += 0.05;
+  const pos = ef.points.geometry.attributes.position;
+  const count = pos.count;
+  for (let i = 0; i < count; i++) {
+    const angle = (i / count) * Math.PI * 2 + ef.t;
+    pos.setXYZ(i,
+      playerPos.x + Math.cos(angle) * 0.8,
+      playerPos.y + 1.5,
+      playerPos.z + Math.sin(angle) * 0.8
+    );
+  }
+  pos.needsUpdate = true;
+}
+
+function removeStunEffect(pseudo) {
+  const ef = stunParticles[pseudo];
+  if (!ef) return;
+  scene.remove(ef.points);
+  delete stunParticles[pseudo];
+}
+
+// =============================================================================
+//  BOUCLE DE JEU PRINCIPALE
+// =============================================================================
+function gameLoop(timestamp) {
+  requestAnimationFrame(gameLoop);
+
+  const dt = Math.min((timestamp - lastTimestamp) / 1000, 0.05); // cap à 50ms
+  lastTimestamp = timestamp;
+
+  // ── Step physique Rapier ──────────────────────────────────────
+  world.step();
+
+  // ── Timer de partie ──────────────────────────────────────────
   if (gamePhase === 'playing') {
     gameTimer -= dt;
-    if (gameTimer <= 0) { gameTimer = 0; gamePhase = 'ended'; showEndScreen(); }
-    if (frameCount % 30 === 0) updateScoreboard();
+    if (gameTimer <= 0) {
+      gameTimer = 0;
+      gamePhase = 'ended';
+      showEndScreen();
+    }
+    if (Math.round(timestamp / 1000) % 1 === 0) updateScoreboard();
   }
 
+  // ── Mise à jour joueurs ───────────────────────────────────────
   for (const pseudo in players) {
     const p = players[pseudo];
+    const pos = p.body.translation();
 
-    // Dynamic scale (200% when holding boomerang)
-    const targetRadius = (frisbeeOwner === pseudo) ? PLAYER_RADIUS * 2 : PLAYER_RADIUS;
-    if (p.sprite.d !== targetRadius * 2) {
-      p.sprite.d += (targetRadius * 2 - p.sprite.d) * 0.15; // Smooth scaling
-    }
+    // Mire qui tourne automatiquement
+    p.mireAngle += 4.5 * dt;
 
     if (p.stunned) {
       p.stunTimer -= dt;
-      if (p.stunTimer <= 0) { p.stunned = false; broadcast({ type: 'recovered', pseudo }); }
-      p.sprite.vel.x *= 0.75; p.sprite.vel.y *= 0.75;
+      if (p.stunTimer <= 0) {
+        p.stunned = false;
+        removeStunEffect(pseudo);
+        broadcast({ type: 'recovered', pseudo });
+      }
+      // Ralentissement progressif
+      const v = p.body.linvel();
+      p.body.setLinvel({ x: v.x * 0.8, y: v.y, z: v.z * 0.8 }, true);
+      createStunEffect(pseudo);
+      updateStunEffect(pseudo, pos);
+
     } else if (p.grabbed) {
       p.grabTimer -= dt;
-      if (p.grabTimer <= 0) { p.grabbed = false; p.grabbedBy = null; broadcast({ type: 'released', pseudo }); }
-      // Amortissement doux : laisse le knockback se dissiper naturellement
-      p.sprite.vel.x *= 0.88;
-      p.sprite.vel.y *= 0.88;
-    } else {
-      // Simulate aiming angle
-      p.mireAngle += MIRE_SPEED * dt;
-
-      const dx = p.inputDir.x; const dy = p.inputDir.y;
-      const currentMaxSpeed = PLAYER_SPEED * (frisbeeOwner === pseudo ? 0.70 : 1.0);
-
-      const targetVelX = dx * currentMaxSpeed;
-      const targetVelY = dy * currentMaxSpeed;
-
-      // Interpolate for extremely fluid movement
-      p.sprite.vel.x += (targetVelX - p.sprite.vel.x) * 0.25;
-      p.sprite.vel.y += (targetVelY - p.sprite.vel.y) * 0.25;
-    }
-
-    push();
-    const r = p.sprite.d / 2;
-    if (p.stunned) {
-      noFill(); stroke(255, 200, 0, 180); strokeWeight(3);
-      arc(p.sprite.x, p.sprite.y, r * 2 + 14, r * 2 + 14, 0, TWO_PI * (p.stunTimer / STUN_DURATION));
-      fill(255, 220, 0); noStroke();
-      for (let i = 0; i < 3; i++) {
-        const a = (i / 3) * TWO_PI + (millis() / 300);
-        circle(p.sprite.x + cos(a) * (r + 12), p.sprite.y + sin(a) * (r + 12), 6);
+      if (p.grabTimer <= 0) {
+        p.grabbed = false;
+        p.grabbedBy = null;
+        broadcast({ type: 'released', pseudo });
       }
+      const v = p.body.linvel();
+      p.body.setLinvel({ x: v.x * 0.85, y: v.y, z: v.z * 0.85 }, true);
+
+    } else {
+      // Mouvement normal
+      const speed = (frisbeeOwner === pseudo) ? PLAYER_SPEED * 0.65 : PLAYER_SPEED;
+      const v = p.body.linvel();
+      p.body.setLinvel({
+        x: p.inputDir.x * speed,
+        y: v.y,            // gravité conservée
+        z: p.inputDir.z * speed
+      }, true);
     }
-    if (p.grabbed) {
-      noFill(); stroke(255, 80, 80, 200); strokeWeight(3);
-      arc(p.sprite.x, p.sprite.y, r * 2 + 14, r * 2 + 14, 0, TWO_PI * (p.grabTimer / GRAB_DURATION));
+
+    // Sync mesh → position physique
+    p.mesh.position.set(pos.x, pos.y, pos.z);
+
+    // Orientation du perso vers la direction du mouvement
+    const spd = Math.hypot(p.inputDir.x, p.inputDir.z);
+    if (spd > 0.1) {
+      const targetAngle = Math.atan2(p.inputDir.x, p.inputDir.z);
+      p.mesh.rotation.y += (targetAngle - p.mesh.rotation.y) * 0.2;
     }
+
+    // Indicateur frisbee (halo doré)
     if (frisbeeOwner === pseudo) {
-      noFill(); stroke(255, 220, 50, 220); strokeWeight(3);
-      circle(p.sprite.x, p.sprite.y, r * 2 + 14);
+      p.mesh.material.emissive.setHex(0x332200);
+    } else {
+      p.mesh.material.emissive.setHex(0x000000);
     }
-
-    // Draw aim arrow dynamically ONLY if they own the frisbee
-    if (p.mireAngle !== undefined && !p.stunned && !p.grabbed && frisbeeOwner === pseudo) {
-      push();
-      translate(p.sprite.x, p.sprite.y);
-      rotate(p.mireAngle);
-      stroke(255, 220, 50, 220);
-      fill(255, 220, 50, 220);
-      strokeWeight(4);
-      const arrowBase = r + 5;
-      const arrowTip = r + 40;
-      line(arrowBase, 0, arrowTip, 0);
-      noStroke();
-      triangle(arrowTip + 4, 0, arrowTip - 8, -7, arrowTip - 8, 7);
-      pop();
-    }
-
-    fill(255); noStroke(); textAlign(CENTER, BOTTOM); textSize(13);
-    text(pseudo + (p.isHost ? ' 👑' : ''), p.sprite.x, p.sprite.y - r - 10);
-    pop();
   }
 
+  // ── Mise à jour frisbee ───────────────────────────────────────
   updateFrisbee(dt);
 
-  push();
-  fill(70); noStroke(); textAlign(LEFT, BOTTOM); textSize(12);
-  text('Manette : ' + location.origin + '/controller', 10, height - 8);
-  pop();
+  // ── Rendu ─────────────────────────────────────────────────────
+  renderer.render(scene, camera);
+  labelRenderer.render(scene, camera);
 }
 
-function drawArena() {
-  // Empty: Map is entirely handled by the background 3D model
+function updateFrisbee(dt) {
+  if (!frisbee) return;
+
+  if (frisbeeOwner) {
+    const p = players[frisbeeOwner];
+    if (p) {
+      const pos = p.body.translation();
+      // Frisbee collé au porteur, légèrement en avant
+      frisbee.body.setTranslation({
+        x: pos.x + Math.cos(p.mireAngle) * 0.6,
+        y: FRISBEE_HEIGHT,
+        z: pos.z + Math.sin(p.mireAngle) * 0.6
+      }, true);
+      frisbee.body.setLinvel({ x: 0, y: 0, z: 0 }, true);
+    } else {
+      frisbeeOwner = null;
+    }
+  } else {
+    // Forcer Y fixe pour que le frisbee glisse à hauteur constante
+    const fPos = frisbee.body.translation();
+    const fVel = frisbee.body.linvel();
+    frisbee.body.setTranslation({ x: fPos.x, y: FRISBEE_HEIGHT, z: fPos.z }, true);
+    frisbee.body.setLinvel({ x: fVel.x, y: 0, z: fVel.z }, true);
+
+    // Rotation visuelle du frisbee
+    frisbee.mesh.rotation.y += dt * 5;
+
+    // ── Détection collision frisbee ↔ joueurs ──
+    const spd = Math.hypot(fVel.x, fVel.z);
+    for (const pseudo in players) {
+      const p = players[pseudo];
+      if (p.stunned || p.grabbed) continue;
+      const pPos = p.body.translation();
+      const dist = Math.hypot(fPos.x - pPos.x, fPos.z - pPos.z);
+
+      if (dist < 0.8) {
+        // Frisbee lancé par un ennemi → stun
+        if (spd > 2 && frisbeeLastThrower && frisbeeLastThrower !== pseudo) {
+          const thrower = players[frisbeeLastThrower];
+          if (thrower && thrower.team !== p.team) {
+            stunPlayer(pseudo);
+            frisbee.body.setLinvel({ x: 0, y: 0, z: 0 }, true);
+            continue;
+          }
+        }
+
+        // Ramassage automatique
+        const now = performance.now() / 1000;
+        const cooldownOk = frisbeeLastThrower !== pseudo || (now - p.lastThrowTime > 0.5);
+        if (!frisbeeOwner && cooldownOk) {
+          frisbeeOwner = pseudo;
+          frisbee.body.setLinvel({ x: 0, y: 0, z: 0 }, true);
+          broadcast({ type: 'hasFrisbee', pseudo });
+        }
+      }
+    }
+  }
+
+  // Sync mesh frisbee
+  const fPos = frisbee.body.translation();
+  frisbee.mesh.position.set(fPos.x, fPos.y, fPos.z);
 }
 
 // =============================================================================
-//  FIN DE PARTIE
+//  UTILITAIRES
 // =============================================================================
-function showEndScreen() {
-  document.getElementById('final-a').textContent = scoreA;
-  document.getElementById('final-b').textContent = scoreB;
-  document.getElementById('end-winner').textContent =
-    scoreA > scoreB ? '🏆 Équipe A gagne !' : scoreB > scoreA ? '🏆 Équipe B gagne !' : '🤝 Égalité !';
-  document.getElementById('end-overlay').style.display = 'flex';
-  document.getElementById('restart-btn').onclick = () => {
-    document.getElementById('end-overlay').style.display = 'none';
-    document.getElementById('lobby-overlay').style.display = 'flex';
-    document.getElementById('hud').style.display = 'none';
-    document.getElementById('ingame-qr').style.display = 'none';
-    gamePhase = 'lobby'; scoreA = scoreB = 0; gameTimer = GAME_DURATION;
-    for (const p in players) removePlayer(p);
-    frisbee.x = width / 2; frisbee.y = height / 2;
-    frisbeeOwner = null; frisbeeLastThrower = null;
-    updateLobbyUI();
-    broadcast({ type: 'returnToLobby' });
-  };
+function escapeHtml(t) {
+  const d = document.createElement('div');
+  d.appendChild(document.createTextNode(t));
+  return d.innerHTML;
 }
 
-function windowResized() { resizeCanvas(windowWidth, windowHeight); }
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  labelRenderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// =============================================================================
+//  INIT
+// =============================================================================
+loadMap();
+createFrisbee();
+
+document.getElementById('lobby-overlay').style.display = 'flex';
+document.getElementById('hud').style.display = 'none';
+document.getElementById('end-overlay').style.display = 'none';
+
+// QR code lobby
+fetch('/api/ip')
+  .then(r => r.json())
+  .then(data => {
+    const url = `http://${data.ip}:${data.port}/controller`;
+    document.getElementById('lobby-url-text').textContent = url;
+    generateQR(document.getElementById('lobby-qr-code'), url, 140);
+  })
+  .catch(console.error);
+
+connectWebSocket();
+requestAnimationFrame(gameLoop);

@@ -2,20 +2,24 @@
 <html lang="fr">
 
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Ulti-mates</title>
-  <link rel="stylesheet" href="game.css">
-  <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
+  <link rel="stylesheet" href="game.css" />
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.150.1/build/three.module.js"
+      }
+    }
+  </script>
 </head>
 
 <body>
 
-  <!-- Map 3D en fond -->
-  <model-viewer id="map-3d" src="Img/workshop_map.glb" camera-orbit="45deg 55deg auto" camera-controls disable-zoom disable-pan shadow-intensity="1"></model-viewer>
-
+  <!-- Statut WebSocket (coin haut gauche) -->
   <div id="connection-status" class="disconnected">Déconnecté</div>
 
-  <!-- HUD jeu -->
+  <!-- HUD jeu (scores + timer) -->
   <div id="hud">
     <div class="team-block" id="team-a">
       <div class="team-name">ÉQUIPE A</div>
@@ -23,7 +27,7 @@
       <div class="team-players" id="players-a">—</div>
     </div>
     <div>
-      <div id="timer">01:00</div>
+      <div id="timer">02:20</div>
     </div>
     <div class="team-block" id="team-b">
       <div class="team-name">ÉQUIPE B</div>
@@ -32,31 +36,28 @@
     </div>
   </div>
 
+  <!-- Labels HTML au-dessus des joueurs (positionnés via JS) -->
+  <div id="labels-container"></div>
+
   <!-- Lobby -->
   <div id="lobby-overlay">
     <h2>🥏 ULTI-MATES</h2>
-
     <div id="lobby-qr-container">
-      <img id="lobby-qr-code" src="" alt="QR Code" />
+      <div id="lobby-qr-code"></div>
       <div id="lobby-url-text"></div>
     </div>
-
     <div id="lobby-count">0 joueur(s) connecté(s)</div>
     <div class="lobby-teams">
       <div class="lobby-team-block">
         <div class="lobby-team-title" id="lobby-title-a">🔵 ÉQUIPE A</div>
-        <div id="lobby-team-a">
-          <div class="lobby-empty">—</div>
-        </div>
+        <div id="lobby-team-a"><div class="lobby-empty">—</div></div>
       </div>
       <div class="lobby-team-block">
         <div class="lobby-team-title" id="lobby-title-b">🔴 ÉQUIPE B</div>
-        <div id="lobby-team-b">
-          <div class="lobby-empty">—</div>
-        </div>
+        <div id="lobby-team-b"><div class="lobby-empty">—</div></div>
       </div>
     </div>
-    <div class="lobby-hint">Le host (👑) peut lancer la partie depuis son téléphone</div>
+    <div class="lobby-hint">Le host (👑) lance la partie depuis son téléphone</div>
   </div>
 
   <!-- QR code in-game (coin bas-droite) -->
@@ -69,17 +70,25 @@
   <div id="end-overlay">
     <div id="end-winner"></div>
     <div class="final-scores">
-      <div class="final-score-block"><span>Équipe A</span><span id="final-a">0</span></div>
-      <div class="final-score-block"><span>Équipe B</span><span id="final-b">0</span></div>
+      <div class="final-score-block">
+        <span>Équipe A</span>
+        <span id="final-a" style="color:#3498db">0</span>
+      </div>
+      <div class="final-score-block">
+        <span>Équipe B</span>
+        <span id="final-b" style="color:#e74c3c">0</span>
+      </div>
     </div>
     <button id="restart-btn">🔄 Retour au lobby</button>
   </div>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/p5@1.11.4/lib/p5.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/planck@1/dist/planck.min.js"></script>
-  <script src="game.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/p5play@3/p5play.js"></script>
-</body>
+  <!-- ─── Scripts ─────────────────────────────────────────────── -->
 
+  <!-- QRCode : chargé en global AVANT le module -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+  <!-- Jeu : ES module (Three.js + Rapier via import) -->
+  <script type="module" src="game.js"></script>
+
+</body>
 </html>

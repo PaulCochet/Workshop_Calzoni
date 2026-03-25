@@ -552,7 +552,6 @@ function handleGrab(msg) {
   for (const id in players) {
     if (id === msg.pseudo) continue;
     const target = players[id];
-    if (target.team === grabber.team) continue;
     if (target.stunned || target.grabbed) continue;
     const tPos = target.body.translation();
     const dist = Math.hypot(gPos.x - tPos.x, gPos.z - tPos.z);
@@ -636,8 +635,6 @@ function stunPlayer(pseudo, throwerPseudo = null) {
   p.stunTimer = STUN_DURATION;
   p.inputDir = { x: 0, z: 0 };
   p.grabbed = false;
-  // Supprimer les étoiles de grab si le joueur vient d'être touché
-  removeGrabStars(pseudo);
 
   if (p.team === 'A') {
     scoreB++;
@@ -966,7 +963,7 @@ function updateFrisbee(dt) {
       const pPos = p.body.translation();
       const dist = Math.hypot(fPos.x - pPos.x, fPos.z - pPos.z);
 
-      if (dist < 0.8) {
+      if (dist < 1.5) {
         // Frisbee lancé par un ennemi → stun
         if (spd > 2 && frisbeeLastThrower && frisbeeLastThrower !== pseudo) {
           const thrower = players[frisbeeLastThrower];

@@ -102,11 +102,11 @@ function showEndResult(winningTeam, mvpPseudo) {
   const won = (team === winningTeam);
   
   screenEnd.style.display = 'flex';
-  screenEnd.classList.remove('win-bg', 'loss-bg');
+  screenEnd.classList.remove('win-bg', 'loss-bg', 'tie-bg');
   
   if (winningTeam === 'tie') {
     resultText.textContent = "Égalité !";
-    screenEnd.classList.add('win-bg'); // Fond neutre/gagnant
+    screenEnd.classList.add('tie-bg');
   } else if (won) {
     resultText.textContent = "Gagné !";
     screenEnd.classList.add('win-bg');

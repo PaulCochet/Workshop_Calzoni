@@ -608,6 +608,15 @@ input[type="text"]::placeholder {
   background-size: 40px 40px;
 }
 
+#end-screen.tie-bg {
+  background-color: #faed36;
+  background-image: conic-gradient(rgba(224, 210, 5, 0.4) 90deg,
+      transparent 90deg 180deg,
+      rgba(224, 210, 5, 0.4) 180deg 270deg,
+      transparent 270deg);
+  background-size: 40px 40px;
+}
+
 #end-mvp-tag {
   background: #ff9800;
   color: #181a00;

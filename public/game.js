@@ -351,6 +351,13 @@ function spawnPlayer(pseudo, team, isHost) {
     const center = box.getCenter(new THREE.Vector3());
     model.position.sub(center);
     model.rotation.y = -Math.PI / 2; // tourner le modèle de -90° pour aligner avec la direction
+    
+    // Easter Egg: Dinnerbone (personnage à l'envers)
+    if (pseudo.toLowerCase() === 'dinnerbone') {
+      model.rotation.z = Math.PI;
+      model.position.y += 3.5; // Remonter nettement plus
+    }
+
     model.traverse(child => {
       if (child.isMesh) {
         child.castShadow = true;
@@ -724,24 +731,22 @@ function showEndScreen() {
   const highlightEl = document.getElementById('end-winner-highlight');
   const listA = document.getElementById('end-list-a');
   const listB = document.getElementById('end-list-b');
+  const headerA = document.getElementById('end-header-a');
+  const headerB = document.getElementById('end-header-b');
 
   // Équipe gagnante
   let winnerText = "";
   let winnerScore = 0;
   if (scoreA > scoreB) {
-    winnerText = "Les Pizzaïolos gagnent !";
-    winnerScore = scoreA;
+    winnerText = "PIZZAIOLOS";
   } else if (scoreB > scoreA) {
-    winnerText = "Les Clients gagnent !";
-    winnerScore = scoreB;
+    winnerText = "CLIENTS";
   } else {
-    winnerText = "Match Nul !";
-    winnerScore = scoreA; // ou scoreB, ils sont égaux
+    winnerText = "ÉGALITÉ";
   }
 
   highlightEl.innerHTML = `
     <div class="winner-label">${winnerText}</div>
-    <div class="winner-score">${winnerScore} points</div>
   `;
 
   // Calcul MVP global
@@ -778,6 +783,9 @@ function showEndScreen() {
 
   listA.innerHTML = playersA.map(renderRow).join('') || '<div class="end-empty">Aucun joueur</div>';
   listB.innerHTML = playersB.map(renderRow).join('') || '<div class="end-empty">Aucun joueur</div>';
+
+  if (headerA) headerA.textContent = `PIZZAIOLOS (${scoreA})`;
+  if (headerB) headerB.textContent = `CLIENTS (${scoreB})`;
 
   // Notification aux manettes
   broadcast({

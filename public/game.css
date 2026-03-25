@@ -67,54 +67,82 @@ canvas {
   top: 0;
   left: 0;
   right: 0;
+  height: 5rem;
   display: none;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 40px;
-  background: transparent;
-  font-family: monospace;
+  padding: 0 2rem;
+  background: conic-gradient(var(--yellow2) 90deg,
+      transparent 90deg 180deg,
+      var(--yellow2) 180deg 270deg,
+      transparent 270deg), var(--yellow);
+  background-repeat: repeat;
+  background-size: 40px 40px;
   z-index: 10;
   pointer-events: none;
-  text-shadow: 0 0 8px rgba(0,0,0,0.8);
+  gap: 1rem;
+  font-family: var(--font-title);
 }
 
-.team-block {
+/* Logo gauche — absolute pour ne pas gêner le centrage */
+#hud-logo {
+  position: absolute;
+  left: 2rem;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+#hud-logo img {
+  height: 3rem;
+  width: auto;
+}
+
+/* Noms d'équipes h2 en noir, collés au fond noir — 3rem = 48px */
+#hud-team-a,
+#hud-team-b {
+  color: var(--black);
+  font-size: 1.5rem;
+  letter-spacing: -0.04em;
+  flex: 0 0 auto;
+  margin: 0 3rem;
+}
+
+/* Bloc central centré absolument */
+#hud-center {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: var(--black);
+  border-radius: 0 0 1rem 1rem;
+  padding: 0.25rem 0.5rem 0.75rem;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.hud-score {
+  font-size: 3rem;
+  color: var(--white);
+  padding: 0 1.25rem;
+  line-height: 1;
+}
+
+#hud-timer-block {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
-}
-
-.team-name {
-  font-size: 12px;
-  color: #aaa;
-}
-
-.team-score {
-  font-size: 38px;
-  font-weight: bold;
-}
-
-.team-players {
-  font-size: 11px;
-  color: #777;
-  max-width: 200px;
-  text-align: center;
-}
-
-#team-a .team-score {
-  color: #3498db;
-}
-
-#team-b .team-score {
-  color: #e74c3c;
+  padding: 0 1rem;
+  border-left: 2px solid rgba(255,255,255,0.15);
+  border-right: 2px solid rgba(255,255,255,0.15);
 }
 
 #timer {
-  font-size: 42px;
+  font-size: 1.875rem; /* h3 = environ 1.5rem * 1.25, environ 30px */
   font-weight: bold;
-  color: #fff;
-  font-family: monospace;
+  color: var(--white);
+  line-height: 1;
 }
 
 #timer.danger {
@@ -123,14 +151,10 @@ canvas {
 }
 
 @keyframes pulse {
-  from {
-    opacity: 1;
-  }
-
-  to {
-    opacity: 0.5;
-  }
+  from { opacity: 1; }
+  to   { opacity: 0.5; }
 }
+
 
 /* ── LOBBY ───────────────────────────────────── */
 #lobby-overlay {

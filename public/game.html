@@ -21,19 +21,29 @@
 
   <!-- HUD jeu (scores + timer) -->
   <div id="hud">
-    <div class="team-block" id="team-a">
-      <div class="team-name">ÉQUIPE A</div>
-      <div class="team-score" id="score-a">0</div>
-      <div class="team-players" id="players-a">—</div>
+    <!-- Logo gauche (position absolue pour ne pas briser le centrage) -->
+    <div id="hud-logo">
+      <img src="Img/Tipolino Logo.svg" alt="Tipolino">
     </div>
-    <div>
-      <div id="timer">02:20</div>
+
+    <!-- Groupe centré : noms + bloc central -->
+    <h2 id="hud-team-a">PIZZAIOLOS</h2>
+
+    <!-- Bloc central score + timer -->
+    <div id="hud-center">
+      <div id="score-a" class="hud-score">0</div>
+      <div id="hud-timer-block">
+        <div id="timer">02:20</div>
+      </div>
+      <div id="score-b" class="hud-score">0</div>
     </div>
-    <div class="team-block" id="team-b">
-      <div class="team-name">ÉQUIPE B</div>
-      <div class="team-score" id="score-b">0</div>
-      <div class="team-players" id="players-b">—</div>
-    </div>
+
+    <!-- Nom équipe B -->
+    <h2 id="hud-team-b">CLIENTS</h2>
+
+    <!-- Joueurs (conservés pour le JS, cachés) -->
+    <div id="players-a" style="display:none;"></div>
+    <div id="players-b" style="display:none;"></div>
   </div>
 
   <!-- Labels HTML au-dessus des joueurs (positionnés via JS) -->
@@ -47,7 +57,7 @@
       <!-- Tableaux partagés avec manette -->
       <div class="lobby-tables">
         <div class="lobby-col">
-          <div class="lobby-header">Équipe A</div>
+          <div class="lobby-header">PIZZAIOLOS</div>
           <div class="lobby-list-container">
             <div id="lobby-team-a" class="lobby-list">
               <div class="lobby-empty">—</div>
@@ -55,7 +65,7 @@
           </div>
         </div>
         <div class="lobby-col">
-          <div class="lobby-header">Équipe B</div>
+          <div class="lobby-header">CLIENTS</div>
           <div class="lobby-list-container">
             <div id="lobby-team-b" class="lobby-list">
               <div class="lobby-empty">—</div>
@@ -64,13 +74,13 @@
         </div>
       </div>
     </div>
-    
+
     <!-- Code QR pour rejoindre, déplacé dans le coin du lobby -->
     <div id="lobby-qr-container">
       <div id="lobby-qr-label">📱 Scanner pour rejoindre</div>
       <div id="lobby-qr-code"></div>
     </div>
-    
+
     <div class="lobby-hint" style="display: none;">Le host (👑) lance la partie depuis son téléphone</div>
   </div>
 
@@ -105,4 +115,5 @@
   <script type="module" src="game.js"></script>
 
 </body>
+
 </html>

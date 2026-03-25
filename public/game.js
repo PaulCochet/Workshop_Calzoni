@@ -21,13 +21,13 @@ const PLAYER_SPEED = 8;
 const STUN_DURATION = 3;       // secondes
 const GAME_DURATION = 140;     // secondes
 const FRISBEE_SPEED = 18;      // force d'impulsion au lancer
-const FRISBEE_HEIGHT = 0.6;     // hauteur fixe du frisbee au-dessus du sol
+const FRISBEE_HEIGHT = 1;     // hauteur fixe du frisbee au-dessus du sol
 const GRAB_RADIUS = 4.0;     // distance max pour attraper (augmentée)
 const GRAB_DURATION = 2;       // secondes
 const THROW_COOLDOWN = 0.6;
 const KNOCKBACK_FORCE = 28;      // impulsion de recul (augmentée)
 const FRISBEE_DAMPING = 1.8;     // résistance air du frisbee
-const MAP_SCALE = 0.05;    // ← ajuster selon l'échelle de votre map Blender
+const MAP_SCALE = 0.55;    // Échelle 
 
 // =============================================================================
 //  GROUPES DE COLLISION RAPIER
@@ -148,8 +148,10 @@ function loadMap() {
     'Img/Workshop_map_V2.glb',
 
     (gltf) => {
-      // ── Appliquer l'échelle globale ──────────────────────────────
+      // ── Appliquer l'échelle globale et rotation ────────────────
       gltf.scene.scale.setScalar(MAP_SCALE);
+      gltf.scene.rotation.y = Math.PI / 2; // Rotation à 90 degrés
+
       // Forcer la mise à jour des matrices world AVANT de lire les positions
       gltf.scene.updateMatrixWorld(true);
 
@@ -287,9 +289,9 @@ function createFrisbee() {
   const body = world.createRigidBody(bodyDesc);
   world.createCollider(
     RAPIER.ColliderDesc.cylinder(0.035, 0.28)
-      .setRestitution(0.6)
-      .setFriction(0.2)
-      .setCollisionGroups(CG_FRISBEE),  // rebondit sur col seulement
+      .setRestitution(0.95)   // ↑ Augmenté de 0.6 à 0.95 pour un max de rebond
+      .setFriction(0.1)       // ↓ Un peu moins de friction pour glisser sur les murs
+      .setCollisionGroups(CG_FRISBEE),
     body
   );
 

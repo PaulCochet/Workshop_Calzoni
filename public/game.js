@@ -779,6 +779,13 @@ function showEndScreen() {
   listA.innerHTML = playersA.map(renderRow).join('') || '<div class="end-empty">Aucun joueur</div>';
   listB.innerHTML = playersB.map(renderRow).join('') || '<div class="end-empty">Aucun joueur</div>';
 
+  // Notification aux manettes
+  broadcast({
+    type: 'gameEnded',
+    winningTeam: scoreA > scoreB ? 'A' : (scoreB > scoreA ? 'B' : 'tie'),
+    mvpPseudo: mvpPlayer ? mvpPlayer.pseudo : null
+  });
+
   overlay.style.display = 'flex';
 
   document.getElementById('restart-btn').onclick = () => {

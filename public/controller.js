@@ -81,7 +81,46 @@ function connectWebSocket() {
       isGrabbed = false; updateActionButtons();
       document.getElementById('grab-feedback').style.display = 'none';
     }
+    if (msg.type === 'gameEnded') {
+      showEndResult(msg.winningTeam, msg.mvpPseudo);
+    }
   };
+}
+
+function showEndResult(winningTeam, mvpPseudo) {
+  const screenEnd = document.getElementById('end-screen');
+  const resultText = document.getElementById('end-result-text');
+  const mvpTag = document.getElementById('end-mvp-tag');
+
+  if (!screenEnd || !resultText || !mvpTag) return;
+
+  // Masquer les autres écrans
+  screenControl.style.display = 'none';
+  document.body.classList.remove('in-game');
+
+  // Déterminer Gagner/Perdre
+  const won = (team === winningTeam);
+  
+  screenEnd.style.display = 'flex';
+  screenEnd.classList.remove('win-bg', 'loss-bg');
+  
+  if (winningTeam === 'tie') {
+    resultText.textContent = "Égalité !";
+    screenEnd.classList.add('win-bg'); // Fond neutre/gagnant
+  } else if (won) {
+    resultText.textContent = "Gagné !";
+    screenEnd.classList.add('win-bg');
+  } else {
+    resultText.textContent = "Perdu";
+    screenEnd.classList.add('loss-bg');
+  }
+
+  // MVP ?
+  if (mvpPseudo === pseudo) {
+    mvpTag.style.display = 'block';
+  } else {
+    mvpTag.style.display = 'none';
+  }
 }
 
 function send(obj) {
@@ -176,6 +215,7 @@ function returnToLobby() {
   screenControl.style.display = 'none';
   screenLobby.style.display = 'none';
   screenTeam.style.display = 'none';
+  document.getElementById('end-screen').style.display = 'none';
   screenLogin.style.display = 'flex';
 
   // Vider le champ texte

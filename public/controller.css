@@ -577,3 +577,65 @@ input[type="text"]::placeholder {
   color: #f39c12;
   font-weight: bold;
 }
+
+#end-screen {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+}
+
+/* Backgrounds avec Patterns (Checkerboard) */
+#end-screen.win-bg {
+  background-color: #94FF31;
+  background-image: conic-gradient(rgba(255, 255, 255, 0.2) 90deg,
+      transparent 90deg 180deg,
+      rgba(255, 255, 255, 0.2) 180deg 270deg,
+      transparent 270deg);
+  background-size: 40px 40px;
+}
+
+#end-screen.loss-bg {
+  background-color: #FE5555;
+  background-image: conic-gradient(rgba(255, 166, 166, 0.2) 90deg,
+      transparent 90deg 180deg,
+      rgba(255, 166, 166, 0.2) 180deg 270deg,
+      transparent 270deg);
+  background-size: 40px 40px;
+}
+
+#end-mvp-tag {
+  background: #ff9800;
+  color: #181a00;
+  padding: 0.5rem 1.5rem;
+  border-radius: 0.75rem;
+  font-weight: 900;
+  font-size: 1.25rem;
+  z-index: 2;
+  margin-bottom: -1rem;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+#end-result-banner {
+  background: #fff;
+  width: 85%;
+  max-width: 600px;
+  padding: 2.5rem 1rem;
+  border-radius: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+}
+
+#end-result-text {
+  font-size: 4rem;
+  color: #181a00;
+  margin-bottom: 0;
+  letter-spacing: -0.04em;
+}

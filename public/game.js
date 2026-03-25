@@ -336,20 +336,35 @@ function spawnPlayer(pseudo, team, isHost) {
     : 4 - Math.random() * 2;
   const startZ = (Math.random() - 0.5) * 4;
 
-  // ── Mesh joueur : capsule colorée ──
-  const bodyGeo = new THREE.CapsuleGeometry(0.38, 0.7, 4, 12);
-  const bodyMat = new THREE.MeshLambertMaterial({ color });
-  const mesh = new THREE.Mesh(bodyGeo, bodyMat);
+  // ── Mesh joueur : modèle GLB ──
+  const glbFile = team === 'A' ? 'Img/Pizzaiolo-Rouge.glb' : 'Img/Pizzaiolo-Bleu.glb';
+  const mesh = new THREE.Group();
   mesh.castShadow = true;
 
-  // Yeux (petites sphères blanches pour l'expressivité)
-  const eyeGeo = new THREE.SphereGeometry(0.07, 8, 8);
-  const eyeMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
-  const eyeL = new THREE.Mesh(eyeGeo, eyeMat);
-  const eyeR = new THREE.Mesh(eyeGeo, eyeMat);
-  eyeL.position.set(-0.15, 0.25, 0.32);
-  eyeR.position.set(0.15, 0.25, 0.32);
-  mesh.add(eyeL, eyeR);
+  const loader = new GLTFLoader();
+  loader.load(glbFile, (gltf) => {
+    const model = gltf.scene;
+    model.scale.setScalar(0.7);
+    // Centrer le modèle
+    const box = new THREE.Box3().setFromObject(model);
+    const center = box.getCenter(new THREE.Vector3());
+    model.position.sub(center);
+    model.traverse(child => {
+      if (child.isMesh) {
+        child.castShadow = true;
+        child.receiveShadow = true;
+      }
+    });
+    mesh.add(model);
+    console.log(`Skin GLB chargé pour ${pseudo} (${team}) ✔`);
+  }, undefined, (err) => {
+    console.error(`Erreur chargement skin ${glbFile}, fallback capsule`);
+    const fallbackGeo = new THREE.CapsuleGeometry(0.38, 0.7, 4, 12);
+    const fallbackMat = new THREE.MeshLambertMaterial({ color });
+    const fallback = new THREE.Mesh(fallbackGeo, fallbackMat);
+    fallback.castShadow = true;
+    mesh.add(fallback);
+  });
 
   scene.add(mesh);
 
@@ -931,7 +946,7 @@ function gameLoop(timestamp) {
 
     // Indicateur frisbee (halo doré) + flèche de visée
     if (frisbeeOwner === pseudo) {
-      p.mesh.material.emissive.setHex(0x332200);
+      mesh.traverse(c => { if (c.isMesh && c.material && c.material.emissive) c.material.emissive.setHex(0x332200); });
       // Flèche visible, rotation absolue sur Y = -p.mireAngle
       if (p.aimPivot) {
         p.aimPivot.visible = true;
@@ -939,7 +954,7 @@ function gameLoop(timestamp) {
         p.aimPivot.rotation.y = -p.mireAngle - p.mesh.rotation.y;
       }
     } else {
-      p.mesh.material.emissive.setHex(0x000000);
+      p.mesh.traverse(c => { if (c.isMesh && c.material && c.material.emissive) c.material.emissive.setHex(0x000000); });
       if (p.aimPivot) p.aimPivot.visible = false;
     }
   }

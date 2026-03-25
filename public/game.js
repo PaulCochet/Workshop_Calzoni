@@ -145,7 +145,7 @@ const world = new RAPIER.World({ x: 0, y: -25, z: 0 });
 function loadMap() {
   const loader = new GLTFLoader();
   loader.load(
-    'Img/Workshop_map_V2.glb',
+    'Img/Workshop_map_V3.glb',
 
     (gltf) => {
       // ── Appliquer l'échelle globale et rotation ────────────────

@@ -17,7 +17,7 @@ import RAPIER from 'https://cdn.jsdelivr.net/npm/@dimforge/rapier3d-compat@0.11.
 // =============================================================================
 //  CONSTANTES
 // =============================================================================
-const PLAYER_SPEED = 3;
+const PLAYER_SPEED = 4;
 const STUN_DURATION = 3;       // secondes 
 const GAME_DURATION = 140;     // secondes
 const FRISBEE_SPEED = 18;      // force d'impulsion au lancer
@@ -921,10 +921,11 @@ function gameLoop(timestamp) {
     // Indicateur frisbee (halo doré) + flèche de visée
     if (frisbeeOwner === pseudo) {
       p.mesh.material.emissive.setHex(0x332200);
-      // Flèche visible, rotation sur Y selon mireAngle
+      // Flèche visible, rotation absolue sur Y = -p.mireAngle
       if (p.aimPivot) {
         p.aimPivot.visible = true;
-        p.aimPivot.rotation.y = -p.mireAngle; // négatif car le mesh regarde +X par défaut
+        // On soustrait la rotation du parent (p.mesh.rotation.y) pour qu'elle soit globale
+        p.aimPivot.rotation.y = -p.mireAngle - p.mesh.rotation.y;
       }
     } else {
       p.mesh.material.emissive.setHex(0x000000);

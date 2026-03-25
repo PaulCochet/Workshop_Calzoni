@@ -981,6 +981,9 @@ function updateFrisbee(dt) {
         z: pos.z + Math.sin(p.mireAngle) * 0.6
       }, true);
       frisbee.body.setLinvel({ x: 0, y: 0, z: 0 }, true);
+
+      // Une fois prise, la pizza ne tourne plus et se fixe sur la flèche
+      frisbee.mesh.rotation.y = -p.mireAngle;
     } else {
       frisbeeOwner = null;
     }
@@ -991,8 +994,16 @@ function updateFrisbee(dt) {
     frisbee.body.setTranslation({ x: fPos.x, y: FRISBEE_HEIGHT, z: fPos.z }, true);
     frisbee.body.setLinvel({ x: fVel.x, y: 0, z: fVel.z }, true);
 
+    const speed = Math.hypot(fVel.x, fVel.z);
+
     // Rotation visuelle du frisbee
-    frisbee.mesh.rotation.y += dt * 5;
+    if (frisbeeLastThrower === null) {
+      // Quand la boite apparait, elle tourne à vitesse constante jusqu'à être prise
+      frisbee.mesh.rotation.y += dt * 5;
+    } else {
+      // Une fois lancée, elle tourne en fonction de sa vitesse et s'arrête en fin de course
+      frisbee.mesh.rotation.y -= dt * speed * 0.6; // On tourne dans le sens du lancer (ou inverse selon rendu)
+    }
 
     // ── Détection collision frisbee ↔ joueurs ──
     const spd = Math.hypot(fVel.x, fVel.z);

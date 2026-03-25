@@ -156,10 +156,25 @@ function enterGame() {
 
 function returnToLobby() {
   gameStarted = false; hasFrisbee = false; isStunned = false; isGrabbed = false;
+  
+  // Réinitialiser les données du joueur (le "kill" pour forcer la reconnexion)
+  pseudo = '';
+  team = '';
+  isHost = false;
+
+  // Réinitialiser l'interface UI (retour au login)
   screenControl.style.display = 'none';
-  screenLobby.style.display   = 'flex';
+  screenLobby.style.display   = 'none';
+  screenTeam.style.display    = 'none';
+  screenLogin.style.display   = 'flex';
+  
+  // Vider le champ texte
+  const input = document.getElementById('pseudo-input');
+  if (input) input.value = '';
+
   document.body.classList.remove('in-game');
-  send({ type: 'spawn', pseudo, team, isHost });
+  
+  // On ne renvoie pas de "spawn" : le joueur doit tout refaire pour rejoindre
 }
 
 // =============================================================================

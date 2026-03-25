@@ -6,9 +6,8 @@
   --black: #181a00;
   --white: #fefce1;
   --shadows: #2f3300;
-  --font-title: 'Boldonse', serif;
+  --font-title: 'Boldonse', sans-serif;
   --font-body: var(--font-title);
-  /* Remplace Inter par Boldonse */
 }
 
 * {

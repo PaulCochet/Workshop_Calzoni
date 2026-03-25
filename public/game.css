@@ -5,7 +5,7 @@
   --black: #181a00;
   --white: #fefce1;
   --shadows: #2f3300;
-  --font-title: 'Boldonse', serif;
+  --font-title: 'Boldonse', sans-serif;
   --font-body: var(--font-title);
 }
 
@@ -41,14 +41,7 @@ canvas {
 }
 
 #connection-status {
-  position: fixed;
-  top: 10px;
-  left: 10px;
-  padding: 6px 12px;
-  border-radius: 5px;
-  font-family: monospace;
-  font-size: 13px;
-  z-index: 20;
+  display: none;
 }
 
 .connected {
@@ -67,7 +60,7 @@ canvas {
   top: 0;
   left: 0;
   right: 0;
-  height: 6rem;
+  height: 4rem;
   display: none;
   align-items: center;
   justify-content: center;
@@ -108,18 +101,35 @@ canvas {
 
 /* Bloc central dans le flux flex */
 #hud-center {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 0;
   background: var(--black);
-  border-radius: 0 0 1rem 1rem;
-  padding: 0.25rem 0.5rem 0.75rem;
+  border-radius: 0;
+  padding: 0.25rem 0.5rem 0;
   height: 100%;
   box-sizing: border-box;
+  overflow: visible;
+}
+
+/* Demi-cercles festonnés sous le bloc central */
+#hud-center::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  height: 18px;
+  background: radial-gradient(circle at 50% 0%, var(--black) 50%, transparent 51%);
+  background-size: 36px 36px;
+  background-repeat: repeat-x;
+  background-position: center top;
+  pointer-events: none;
 }
 
 .hud-score {
-  font-size: 3rem;
+  font-size: 1.5rem;
   color: var(--yellow);
   padding: 0 1.25rem;
   line-height: 1;

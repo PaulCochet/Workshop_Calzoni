@@ -102,6 +102,8 @@ document.getElementById('pseudo-btn').addEventListener('click', () => {
   const val = document.getElementById('pseudo-input').value.trim();
   if (!val) return;
   pseudo = val;
+  const hp = document.getElementById('hello-pseudo');
+  if (hp) hp.innerHTML = `Hello <span style="color: var(--shadows);">${pseudo}</span>`;
   screenLogin.style.display = 'none';
   screenTeam.style.display  = 'flex';
 });
@@ -115,23 +117,24 @@ document.getElementById('btn-team-b').addEventListener('click', () => joinTeam('
 
 function joinTeam(t) {
   team   = t;
-  isHost = document.getElementById('host-checkbox').checked;
+  isHost = false;
   send({ type: 'spawn', pseudo, team, isHost });
   screenTeam.style.display  = 'none';
   screenLobby.style.display = 'flex';
-  document.getElementById('lobby-pseudo').textContent = pseudo + ' — Équipe ' + team + (isHost ? ' 👑' : '');
-  if (isHost) document.getElementById('start-btn-wrapper').style.display = 'block';
+  document.getElementById('lobby-pseudo').textContent = pseudo + ' — Équipe ' + team;
+  document.getElementById('start-btn-wrapper').style.display = 'block';
+  const waitingText = document.querySelector('.lobby-waiting');
+  if (waitingText) waitingText.style.display = 'none';
 }
 
-// Lobby → lancer la partie (host seulement)
+// Lobby → lancer la partie (tout le monde)
 document.getElementById('start-game-btn').addEventListener('click', () => {
-  if (!isHost) return;
   send({ type: 'startGame', pseudo });
 });
 
 function updateLobbyDisplay(playersList) {
-  const listA = playersList.filter(p => p.team === 'A').map(p => p.pseudo + (p.isHost ? ' 👑' : ''));
-  const listB = playersList.filter(p => p.team === 'B').map(p => p.pseudo + (p.isHost ? ' 👑' : ''));
+  const listA = playersList.filter(p => p.team === 'A').map(p => p.pseudo);
+  const listB = playersList.filter(p => p.team === 'B').map(p => p.pseudo);
   const elA = document.getElementById('lobby-list-a');
   const elB = document.getElementById('lobby-list-b');
   if (elA) elA.innerHTML = listA.map(n => `<div class="lobby-entry">🔵 ${n}</div>`).join('') || '<div class="lobby-empty">—</div>';

@@ -2,13 +2,13 @@
 :root {
   --yellow: #faed36;
   --yellow2: rgba(224, 210, 5, 0.25);
-  /* #E0D205 avec 25% d'opacité */
   --yellow-dark: #B6AD25;
   --black: #181a00;
   --white: #fefce1;
   --shadows: #2f3300;
   --font-title: 'Boldonse', serif;
-  --font-body: var(--font-title); /* Remplace Inter par Boldonse */
+  --font-body: var(--font-title);
+  /* Remplace Inter par Boldonse */
 }
 
 * {
@@ -54,11 +54,23 @@ body.in-game .status {
   display: none !important;
 }
 
+h1,
+h2,
+h3 {
+  letter-spacing: -0.04em;
+  margin-bottom: 1.5rem;
+}
+
 h1 {
-  font-size: 1.5em;
-  color: var(--yellow);
-  letter-spacing: 0.125rem;
-  margin-bottom: 4px;
+  font-size: 2.5rem;
+}
+
+h2 {
+  font-size: 2rem;
+}
+
+h3 {
+  font-size: 1.5rem;
 }
 
 .subtitle {
@@ -177,6 +189,11 @@ h1 {
   max-width: 20rem;
 }
 
+#login-logo {
+  width: 60%;
+  height: auto;
+}
+
 input[type="text"] {
   font-family: var(--font-body);
   font-size: 1.1em;
@@ -192,7 +209,8 @@ input[type="text"] {
 
 input[type="text"]::placeholder {
   color: var(--black);
-  opacity: 0.6; /* Rend le texte du placeholder plus lisible */
+  opacity: 0.2;
+  /* Rend le texte du placeholder plus lisible */
 }
 
 .btn-primary {
@@ -204,6 +222,7 @@ input[type="text"]::placeholder {
   box-shadow: 0 0.25rem 0 0.5rem var(--shadows);
   font-size: 1.1em;
   font-weight: 700;
+  letter-spacing: 0.1em;
   border: none;
   border-radius: 0.75rem;
   cursor: pointer;
@@ -215,58 +234,57 @@ input[type="text"]::placeholder {
   display: none;
   flex-direction: column;
   align-items: center;
-  gap: 1rem;
+  gap: 0.25rem;
   width: 100%;
-  max-width: 20rem;
+  max-width: 40rem;
 }
 
-#team-screen p {
-  font-family: var(--font-body);
-  color: #aaa;
-  font-size: 0.9em;
+#hello-pseudo {
+  font-size: 1.8em;
+  color: var(--black);
+  margin-bottom: 0;
+  text-align: center;
+  letter-spacing: -0.02em;
+}
+
+#team-screen h2 {
+  font-size: 2.5em;
+  color: var(--black);
+  margin-bottom: 0;
+  text-align: center;
+  line-height: 1.1;
+  letter-spacing: -0.05em;
 }
 
 .team-btns {
-  display: flex;
-  gap: 0.875rem;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2rem;
   width: 100%;
+  margin-top: 1.5rem;
+  /* 24px = 1.5rem */
 }
 
 .btn-team {
-  flex: 1;
-  padding: 1.625rem 0.625rem;
-  font-size: 1.4em;
-  font-weight: bold;
-  border: none;
-  border-radius: 0.875rem;
+  width: 100%;
+  font-family: var(--font-body);
+  padding: 0.5rem 0;
+  /* Padding horizontal réduit pour l'égalité des tailles */
+  background: var(--black);
+  color: var(--white);
+  box-shadow: 0 0.25rem 0 0.5rem var(--shadows);
+  font-size: 1.1em;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  border: 0.25rem solid var(--black);
+  border-radius: 1rem;
   cursor: pointer;
   touch-action: manipulation;
 }
 
-#btn-team-a {
-  background: #3498db;
-  color: #fff;
-}
-
-#btn-team-b {
-  background: #e74c3c;
-  color: #fff;
-}
-
-.host-option {
-  font-family: var(--font-body);
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.85em;
-  color: #aaa;
-  cursor: pointer;
-}
-
-.host-option input {
-  width: 1.125rem;
-  height: 1.125rem;
-  cursor: pointer;
+.btn-team:active {
+  transform: translateY(0.2rem);
+  box-shadow: 0 0.1rem 0 0.5rem var(--shadows);
 }
 
 /* ── ÉCRAN LOBBY ── */

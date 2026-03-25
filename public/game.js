@@ -275,7 +275,7 @@ function createFrisbee() {
   loader.load('Img/frisbeeV2.glb', (gltf) => {
     const model = gltf.scene;
     // Ajustements visuels du modèle
-    model.scale.setScalar(0.7); // Réduire la taille de la boîte à pizza
+    model.scale.setScalar(0.5); // Réduire la taille de la boîte à pizza
     model.traverse(child => {
       if (child.isMesh) {
         child.castShadow = true;

@@ -415,26 +415,25 @@ input[type="text"]::placeholder {
 #control-screen {
   display: none;
   flex-direction: row;
-  align-items: center;
-  justify-content: space-around;
+  align-items: stretch;
+  justify-content: center;
   width: 100%;
   height: 100%;
-  padding: 1rem 2rem;
+  padding: 1.5rem;
   gap: 1.5rem;
-  background: var(--yellow);
+  background: transparent;
 }
 
 /* ── JOYSTICK (style UI équipe) ── */
 #joystick-zone {
-  width: 10.625rem;
-  height: 10.625rem;
+  flex: 1;
+  height: 100%;
   border-radius: 1.5rem;
   background: var(--yellow-dark);
   border: 0.5rem solid var(--yellow);
   box-shadow: 0 0.5rem 0 var(--shadows);
   position: relative;
   touch-action: none;
-  flex-shrink: 0;
 }
 
 #joystick-knob {
@@ -452,8 +451,8 @@ input[type="text"]::placeholder {
 
 /* ── BOUTON ACTION UNIQUE ── */
 #action-btn {
-  width: 10.625rem;
-  height: 10.625rem;
+  flex: 1;
+  height: 100%;
   border-radius: 1.5rem;
   border: none;
   cursor: pointer;
@@ -468,7 +467,6 @@ input[type="text"]::placeholder {
   font-weight: 900;
   letter-spacing: -0.03em;
   transition: transform 0.08s, box-shadow 0.08s;
-  flex-shrink: 0;
 }
 
 #action-btn:active {

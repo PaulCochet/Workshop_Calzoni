@@ -22,12 +22,12 @@
 // =============================================================================
 
 let ws;
-let pseudo    = '';
-let team      = '';
-let isHost    = false;
-let hasFrisbee  = false;
-let isStunned   = false;
-let isGrabbed   = false;
+let pseudo = '';
+let team = '';
+let isHost = false;
+let hasFrisbee = false;
+let isStunned = false;
+let isGrabbed = false;
 let gameStarted = false;
 let grabCooldown = false;
 let grabCooldownInterval = null;
@@ -35,16 +35,16 @@ let grabCooldownInterval = null;
 // Joystick
 let joystickActive = false;
 let joystickOrigin = { x: 0, y: 0 };
-let joystickDelta  = { x: 0, y: 0 };
-const JOYSTICK_MAX      = 50;
+let joystickDelta = { x: 0, y: 0 };
+let joystickMax = 50;
 const JOYSTICK_DEADZONE = 5;
 
 // Éléments DOM
-const screenLogin   = document.getElementById('login-screen');
-const screenTeam    = document.getElementById('team-screen');
-const screenLobby   = document.getElementById('lobby-screen');
+const screenLogin = document.getElementById('login-screen');
+const screenTeam = document.getElementById('team-screen');
+const screenLobby = document.getElementById('lobby-screen');
 const screenControl = document.getElementById('control-screen');
-const statusEl      = document.getElementById('status');
+const statusEl = document.getElementById('status');
 
 // =============================================================================
 //  WEBSOCKET
@@ -52,12 +52,12 @@ const statusEl      = document.getElementById('status');
 function connectWebSocket() {
   const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
   ws = new WebSocket(`${protocol}//${location.host}`);
-  ws.onopen  = () => setStatus('Connecté ✔', true);
+  ws.onopen = () => setStatus('Connecté ✔', true);
   ws.onclose = () => { setStatus('Déconnecté…', false); setTimeout(connectWebSocket, 2000); };
   ws.onmessage = (event) => {
     let msg; try { msg = JSON.parse(event.data); } catch (e) { return; }
 
-    if (msg.type === 'lobbyState')   updateLobbyDisplay(msg.players);
+    if (msg.type === 'lobbyState') updateLobbyDisplay(msg.players);
     if (msg.type === 'gameStarted' && !gameStarted && pseudo && team) enterGame();
     if (msg.type === 'returnToLobby') returnToLobby();
 
@@ -90,7 +90,7 @@ function send(obj) {
 
 function setStatus(text, ok) {
   statusEl.textContent = text;
-  statusEl.className   = ok ? 'status connected' : 'status disconnected';
+  statusEl.className = ok ? 'status connected' : 'status disconnected';
 }
 
 // =============================================================================
@@ -105,7 +105,7 @@ document.getElementById('pseudo-btn').addEventListener('click', () => {
   const hp = document.getElementById('hello-pseudo');
   if (hp) hp.innerHTML = `Hello <span style="color: var(--shadows);">${pseudo}</span>`;
   screenLogin.style.display = 'none';
-  screenTeam.style.display  = 'flex';
+  screenTeam.style.display = 'flex';
 });
 document.getElementById('pseudo-input').addEventListener('keydown', e => {
   if (e.key === 'Enter') document.getElementById('pseudo-btn').click();
@@ -116,13 +116,13 @@ document.getElementById('btn-team-a').addEventListener('click', () => joinTeam('
 document.getElementById('btn-team-b').addEventListener('click', () => joinTeam('B'));
 
 function joinTeam(t) {
-  team   = t;
+  team = t;
   isHost = false;
   send({ type: 'spawn', pseudo, team, isHost });
-  screenTeam.style.display  = 'none';
+  screenTeam.style.display = 'none';
   screenLobby.style.display = 'flex';
   document.getElementById('start-btn-wrapper').style.display = 'flex';
-  
+
   // Affichage immédiat (au cas où le jeu principal n'est pas encore ouvert ou met du temps à répondre)
   updateLobbyDisplay([{ pseudo, team, isHost }]);
 }
@@ -139,23 +139,23 @@ function updateLobbyDisplay(playersList) {
   const elB = document.getElementById('lobby-list-b');
 
   if (elA) {
-    elA.innerHTML = listA.map(p => 
+    elA.innerHTML = listA.map(p =>
       `<div class="lobby-entry ${p.pseudo === pseudo ? 'is-me' : ''}">${p.pseudo === pseudo ? 'Moi' : p.pseudo}</div>`
     ).join('') || '<div class="lobby-empty">—</div>';
   }
   if (elB) {
-    elB.innerHTML = listB.map(p => 
+    elB.innerHTML = listB.map(p =>
       `<div class="lobby-entry ${p.pseudo === pseudo ? 'is-me' : ''}">${p.pseudo === pseudo ? 'Moi' : p.pseudo}</div>`
     ).join('') || '<div class="lobby-empty">—</div>';
   }
-  
+
   const cnt = document.getElementById('lobby-player-count');
   if (cnt) cnt.textContent = `${playersList.length} joueur(s) connecté(s)`;
 }
 
 function enterGame() {
   gameStarted = true;
-  screenLobby.style.display   = 'none';
+  screenLobby.style.display = 'none';
   screenControl.style.display = 'flex';
   document.body.classList.add('in-game');
   document.getElementById('player-name').textContent = pseudo + ' — Équipe ' + team;
@@ -166,7 +166,7 @@ function enterGame() {
 
 function returnToLobby() {
   gameStarted = false; hasFrisbee = false; isStunned = false; isGrabbed = false;
-  
+
   // Réinitialiser les données du joueur (le "kill" pour forcer la reconnexion)
   pseudo = '';
   team = '';
@@ -174,16 +174,16 @@ function returnToLobby() {
 
   // Réinitialiser l'interface UI (retour au login)
   screenControl.style.display = 'none';
-  screenLobby.style.display   = 'none';
-  screenTeam.style.display    = 'none';
-  screenLogin.style.display   = 'flex';
-  
+  screenLobby.style.display = 'none';
+  screenTeam.style.display = 'none';
+  screenLogin.style.display = 'flex';
+
   // Vider le champ texte
   const input = document.getElementById('pseudo-input');
   if (input) input.value = '';
 
   document.body.classList.remove('in-game');
-  
+
   // On ne renvoie pas de "spawn" : le joueur doit tout refaire pour rejoindre
 }
 
@@ -199,6 +199,7 @@ function setupJoystick() {
     if (e.targetTouches.length === 0) return;
     const t = e.targetTouches[0];
     const r = zone.getBoundingClientRect();
+    joystickMax = Math.max(20, Math.min(r.width, r.height) / 2 - 30);
     joystickOrigin = { x: t.clientX - r.left, y: t.clientY - r.top };
     joystickActive = true; updateKnob(0, 0);
   }, { passive: false });
@@ -209,9 +210,9 @@ function setupJoystick() {
     const t = e.targetTouches[0];
     const r = zone.getBoundingClientRect();
     let dx = (t.clientX - r.left) - joystickOrigin.x;
-    let dy = (t.clientY - r.top)  - joystickOrigin.y;
+    let dy = (t.clientY - r.top) - joystickOrigin.y;
     const dist = Math.hypot(dx, dy);
-    if (dist > JOYSTICK_MAX) { dx = dx/dist*JOYSTICK_MAX; dy = dy/dist*JOYSTICK_MAX; }
+    if (dist > joystickMax) { dx = dx / dist * joystickMax; dy = dy / dist * joystickMax; }
     joystickDelta = { x: dx, y: dy };
     updateKnob(dx, dy);
   }, { passive: false });
@@ -239,7 +240,7 @@ function startMoveLoop() {
       return;
     }
     isMoving = true;
-    send({ type: 'move', pseudo, dir: { x: joystickDelta.x/JOYSTICK_MAX, y: joystickDelta.y/JOYSTICK_MAX } });
+    send({ type: 'move', pseudo, dir: { x: joystickDelta.x / joystickMax, y: joystickDelta.y / joystickMax } });
   }, 33);
 }
 
@@ -252,12 +253,12 @@ document.getElementById('force-landscape-btn')?.addEventListener('click', () => 
   document.body.classList.add('ignore-portrait');
   try {
     if (document.documentElement.requestFullscreen) {
-      document.documentElement.requestFullscreen().catch(()=>{});
+      document.documentElement.requestFullscreen().catch(() => { });
     }
     if (screen.orientation && screen.orientation.lock) {
-      screen.orientation.lock('landscape').catch(()=>{});
+      screen.orientation.lock('landscape').catch(() => { });
     }
-  } catch(e) {}
+  } catch (e) { }
 });
 
 // LANCER / POUSSER (bouton unique contextuel)
@@ -307,8 +308,8 @@ function startGrabCooldown() {
 }
 
 function updateActionButtons(cooldownRemaining) {
-  const btn       = document.getElementById('action-btn');
-  const label     = btn ? btn.querySelector('.btn-label') : null;
+  const btn = document.getElementById('action-btn');
+  const label = btn ? btn.querySelector('.btn-label') : null;
   const statusDiv = document.getElementById('action-status');
 
   const blocked = isStunned || isGrabbed;
@@ -332,11 +333,11 @@ function updateActionButtons(cooldownRemaining) {
   }
 
   if (statusDiv) {
-    if (isStunned)          statusDiv.textContent = '😵 ÉTOURDI…';
-    else if (isGrabbed)     statusDiv.textContent = '🤝 ATTRAPÉ !';
-    else if (grabCooldown)  statusDiv.textContent = `⏳ Cooldown… (${cooldownRemaining ?? ''}s)`;
-    else if (hasFrisbee)    statusDiv.textContent = '🥏 Tu as le frisbee !';
-    else                    statusDiv.textContent = '';
+    if (isStunned) statusDiv.textContent = '😵 ÉTOURDI…';
+    else if (isGrabbed) statusDiv.textContent = '🤝 ATTRAPÉ !';
+    else if (grabCooldown) statusDiv.textContent = `⏳ Cooldown… (${cooldownRemaining ?? ''}s)`;
+    else if (hasFrisbee) statusDiv.textContent = '🥏 Tu as le frisbee !';
+    else statusDiv.textContent = '';
   }
 }
 

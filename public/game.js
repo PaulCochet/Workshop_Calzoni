@@ -889,6 +889,42 @@ function removeStunEffect(pseudo) {
 }
 
 // =============================================================================
+//  EFFETS VISUELS — particules de pas (poussière)
+// =============================================================================
+const footDustParticles = []; // { mesh, life, maxLife }
+const DUST_POOL_MAX = 120;
+const dustGeo = new THREE.SphereGeometry(0.04, 4, 4);
+const dustMat = new THREE.MeshBasicMaterial({ color: 0x888888, transparent: true, opacity: 0.5 });
+
+function spawnFootDust(pos) {
+  if (footDustParticles.length >= DUST_POOL_MAX) return;
+  const p = new THREE.Mesh(dustGeo, dustMat.clone());
+  p.position.set(
+    pos.x + (Math.random() - 0.5) * 0.3,
+    pos.y - 0.3,
+    pos.z + (Math.random() - 0.5) * 0.3
+  );
+  const scale = 0.5 + Math.random() * 0.8;
+  p.scale.setScalar(scale);
+  scene.add(p);
+  footDustParticles.push({ mesh: p, life: 0.4 + Math.random() * 0.2, maxLife: 0.5 });
+}
+
+function updateFootDust(dt) {
+  for (let i = footDustParticles.length - 1; i >= 0; i--) {
+    const d = footDustParticles[i];
+    d.life -= dt;
+    d.mesh.position.y += dt * 0.3;
+    d.mesh.material.opacity = Math.max(0, (d.life / d.maxLife) * 0.45);
+    if (d.life <= 0) {
+      scene.remove(d.mesh);
+      d.mesh.material.dispose();
+      footDustParticles.splice(i, 1);
+    }
+  }
+}
+
+// =============================================================================
 //  BOUCLE DE JEU PRINCIPALE
 // =============================================================================
 function gameLoop(timestamp) {
@@ -967,6 +1003,8 @@ function gameLoop(timestamp) {
     if (spd > 0.1) {
       const targetAngle = Math.atan2(p.inputDir.x, p.inputDir.z);
       p.mesh.rotation.y += (targetAngle - p.mesh.rotation.y) * 0.2;
+      // Particules de pas
+      if (Math.random() < 0.3) spawnFootDust(newPos);
     }
 
     // Indicateur frisbee (halo doré) + flèche de visée
@@ -986,6 +1024,9 @@ function gameLoop(timestamp) {
 
   // ── Mise à jour frisbee ───────────────────────────────────────
   updateFrisbee(dt);
+
+  // ── Mise à jour particules de pas ─────────────────────────────
+  updateFootDust(dt);
 
   // ── Rendu ─────────────────────────────────────────────────────
   renderer.render(scene, camera);

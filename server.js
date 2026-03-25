@@ -45,6 +45,11 @@ wss.on('connection', (ws) => {
     try { msg = JSON.parse(data); } catch (e) { return; }
     console.log(`type="${msg.type}" pseudo="${msg.pseudo || ''}"`);
 
+    // Store the pseudo on the socket when they spawn
+    if (msg.type === 'spawn' && msg.pseudo) {
+      ws.pseudo = msg.pseudo;
+    }
+
     for (const client of clients) {
       if (client !== ws && client.readyState === WebSocket.OPEN) {
         client.send(JSON.stringify(msg));
@@ -54,7 +59,16 @@ wss.on('connection', (ws) => {
 
   ws.on('close', () => {
     clients.delete(ws);
-    console.log(`Client déconnecté. Total : ${clients.size}`);
+    // Broadcast disconnect message to all other clients
+    if (ws.pseudo) {
+      const dropMsg = JSON.stringify({ type: 'disconnect', pseudo: ws.pseudo });
+      for (const client of clients) {
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(dropMsg);
+        }
+      }
+    }
+    console.log(`Client déconnecté (${ws.pseudo || 'anonyme'}). Total : ${clients.size}`);
   });
 
   ws.on('error', (err) => {

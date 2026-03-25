@@ -73,7 +73,7 @@ scene.fog = new THREE.Fog(0x111111, 20, 60);
 
 // Caméra — vue isométrique style Overcooked
 const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 200);
-camera.position.set(0, 16, 12);
+camera.position.set(0, 32, 22); // Caméra encore plus reculée pour avoir une vue d'ensemble complète
 camera.lookAt(0, 0, 0);
 
 // Lumières
@@ -119,6 +119,7 @@ function loadMap() {
 
     (gltf) => {
       gltf.scene.scale.setScalar(MAP_SCALE);
+      gltf.scene.rotation.y = Math.PI / 2; // Rotation de 90 degrés (corrigée)
       gltf.scene.traverse(child => {
         if (child.isMesh) {
           child.castShadow    = true;
@@ -337,6 +338,7 @@ function connectWebSocket() {
     else if (msg.type === 'grab')      handleGrab(msg);
     else if (msg.type === 'startGame') startGame();
     else if (msg.type === 'getState')  handleGetState();
+    else if (msg.type === 'disconnect') handleDisconnect(msg);
   };
 }
 
@@ -442,6 +444,15 @@ function handleGrab(msg) {
 
 function handleGetState() {
   if (gamePhase === 'playing') broadcast({ type: 'gameStarted' });
+}
+
+function handleDisconnect(msg) {
+  removePlayer(msg.pseudo);
+  if (gamePhase === 'lobby') {
+    broadcastLobbyState();
+  } else {
+    updateScoreboard();
+  }
 }
 
 // =============================================================================

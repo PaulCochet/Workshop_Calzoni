@@ -901,7 +901,7 @@ function spawnFootDust(pos) {
   const p = new THREE.Mesh(dustGeo, dustMat.clone());
   p.position.set(
     pos.x + (Math.random() - 0.5) * 0.3,
-    pos.y - 3,
+    pos.y - 0.8,
     pos.z + (Math.random() - 0.5) * 0.3
   );
   const scale = 1.0 + Math.random() * 1.0;

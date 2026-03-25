@@ -19,7 +19,7 @@ import RAPIER from 'https://cdn.jsdelivr.net/npm/@dimforge/rapier3d-compat@0.11.
 // =============================================================================
 const PLAYER_SPEED = 4;
 const STUN_DURATION = 3;       // secondes 
-const GAME_DURATION = 140;     // secondes
+const GAME_DURATION = 120;     // secondes
 const FRISBEE_SPEED = 18;      // force d'impulsion au lancer
 const FRISBEE_HEIGHT = 2;     // hauteur fixe du frisbee au-dessus du sol
 const GRAB_RADIUS = 4.0;     // distance max pour attraper (augmentée)
@@ -345,7 +345,7 @@ function spawnPlayer(pseudo, team, isHost) {
   const loader = new GLTFLoader();
   loader.load(glbFile, (gltf) => {
     const model = gltf.scene;
-    model.scale.setScalar(0.7);
+    model.scale.setScalar(0.5);
     // Centrer le modèle
     const box = new THREE.Box3().setFromObject(model);
     const center = box.getCenter(new THREE.Vector3());
@@ -773,8 +773,8 @@ function showEndScreen() {
     `;
   };
 
-  const playersA = allPlayers.filter(p => p.team === 'A').sort((a,b) => b.points - a.points);
-  const playersB = allPlayers.filter(p => p.team === 'B').sort((a,b) => b.points - a.points);
+  const playersA = allPlayers.filter(p => p.team === 'A').sort((a, b) => b.points - a.points);
+  const playersB = allPlayers.filter(p => p.team === 'B').sort((a, b) => b.points - a.points);
 
   listA.innerHTML = playersA.map(renderRow).join('') || '<div class="end-empty">Aucun joueur</div>';
   listB.innerHTML = playersB.map(renderRow).join('') || '<div class="end-empty">Aucun joueur</div>';
@@ -1112,7 +1112,7 @@ if (typeof lottie !== 'undefined') {
     autoplay: false,
     path: 'exemple/lottie_clean.json'
   });
-  
+
   transitionAnim = lottie.loadAnimation({
     container: document.getElementById('transition-lottie-container'),
     renderer: 'svg',

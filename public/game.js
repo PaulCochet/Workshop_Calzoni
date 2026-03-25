@@ -17,7 +17,7 @@ import RAPIER from 'https://cdn.jsdelivr.net/npm/@dimforge/rapier3d-compat@0.11.
 // =============================================================================
 //  CONSTANTES
 // =============================================================================
-const PLAYER_SPEED = 8;
+const PLAYER_SPEED = 4;
 const STUN_DURATION = 3;       // secondes
 const GAME_DURATION = 140;     // secondes
 const FRISBEE_SPEED = 18;      // force d'impulsion au lancer
@@ -281,22 +281,40 @@ function createFrisbee() {
   ring.rotation.x = Math.PI / 2;
   mesh.add(ring);
 
-  // Physique Rapier — corps dynamique avec damping élevé
+  // Physique Rapier — corps dynamique avec CCD activé pour éviter le tunneling
   const bodyDesc = RAPIER.RigidBodyDesc.dynamic()
     .setTranslation(0, FRISBEE_HEIGHT, 0)
     .setLinearDamping(FRISBEE_DAMPING)
-    .setAngularDamping(5.0);
+    .setAngularDamping(5.0)
+    .setCcdEnabled(true); // ← Continuous Collision Detection : évite que le frisbee transperce les murs
   const body = world.createRigidBody(bodyDesc);
   world.createCollider(
     RAPIER.ColliderDesc.cylinder(0.035, 0.28)
-      .setRestitution(0.95)   // ↑ Augmenté de 0.6 à 0.95 pour un max de rebond
-      .setFriction(0.1)       // ↓ Un peu moins de friction pour glisser sur les murs
+      .setRestitution(0.95)
+      .setFriction(0.1)
       .setCollisionGroups(CG_FRISBEE),
     body
   );
 
   frisbee = { mesh, body };
   resetFrisbee();
+}
+
+// Murs de sécurité invisibles qui encadrent toute la zone de jeu
+// (fallback si les colliders de la map ne couvrent pas tout le périmètre)
+const MAP_HALF_W = 10;  // demi-largeur en unités monde
+const MAP_HALF_D = 7;   // demi-profondeur en unités monde
+const WALL_H     = 4;   // hauteur des murs invisibles
+
+function createBoundaryWalls() {
+  const walls = [
+    RAPIER.ColliderDesc.cuboid(0.2, WALL_H, MAP_HALF_D).setTranslation(-MAP_HALF_W, WALL_H, 0),  // gauche
+    RAPIER.ColliderDesc.cuboid(0.2, WALL_H, MAP_HALF_D).setTranslation( MAP_HALF_W, WALL_H, 0),  // droite
+    RAPIER.ColliderDesc.cuboid(MAP_HALF_W, WALL_H, 0.2).setTranslation(0, WALL_H, -MAP_HALF_D), // haut
+    RAPIER.ColliderDesc.cuboid(MAP_HALF_W, WALL_H, 0.2).setTranslation(0, WALL_H,  MAP_HALF_D), // bas
+    RAPIER.ColliderDesc.cuboid(MAP_HALF_W, 0.2, MAP_HALF_D).setTranslation(0, -0.2, 0),         // sol
+  ];
+  walls.forEach(d => world.createCollider(d.setCollisionGroups(CG_COL).setRestitution(0.9).setFriction(0.05)));
 }
 
 function resetFrisbee() {
@@ -542,6 +560,8 @@ function handleGrab(msg) {
     target.grabTimer = GRAB_DURATION;
     target.grabbedBy = msg.pseudo;
     target.inputDir = { x: 0, z: 0 };
+    // Supprimer l'effet de stun si le joueur vient d'être attrapé
+    removeStunEffect(closest);
 
     // Knockback (direction opposée au grabber)
     const tPos = target.body.translation();
@@ -614,6 +634,8 @@ function stunPlayer(pseudo) {
   p.stunTimer = STUN_DURATION;
   p.inputDir = { x: 0, z: 0 };
   p.grabbed = false;
+  // Supprimer les étoiles de grab si le joueur vient d'être touché
+  removeGrabStars(pseudo);
   if (p.team === 'A') scoreB++; else scoreA++;
   if (frisbeeOwner === pseudo) {
     frisbeeOwner = null;
@@ -740,6 +762,76 @@ function removeStunEffect(pseudo) {
 }
 
 // =============================================================================
+//  EFFETS VISUELS — étoiles au-dessus du joueur attrapé
+// =============================================================================
+const grabStars = {}; // pseudo → { points, t }
+
+// Créer une "star" 3D (pyramide aplatie)
+function makeStarMesh() {
+  const geo = new THREE.BufferGeometry();
+  const n = 5; // branches
+  const verts = [];
+  for (let i = 0; i < n; i++) {
+    // pointe externe
+    const ao = (i / n) * Math.PI * 2;
+    verts.push(Math.cos(ao) * 0.18, 0, Math.sin(ao) * 0.18);
+    // pointe interne
+    const ai = ao + Math.PI / n;
+    verts.push(Math.cos(ai) * 0.07, 0, Math.sin(ai) * 0.07);
+  }
+  // Centre
+  verts.push(0, 0, 0);
+  const vertices = new Float32Array(verts);
+  const center = n * 2;
+  const indices = [];
+  for (let i = 0; i < n * 2; i++) {
+    indices.push(center, i, (i + 1) % (n * 2));
+  }
+  geo.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+  geo.setIndex(indices);
+  geo.computeVertexNormals();
+  const mat = new THREE.MeshBasicMaterial({ color: 0xFFD700, side: THREE.DoubleSide });
+  return new THREE.Mesh(geo, mat);
+}
+
+function createGrabStars(pseudo) {
+  if (grabStars[pseudo]) return;
+  const group = new THREE.Group();
+  const starCount = 3;
+  for (let i = 0; i < starCount; i++) {
+    const star = makeStarMesh();
+    group.add(star);
+  }
+  scene.add(group);
+  grabStars[pseudo] = { group, t: 0 };
+}
+
+function updateGrabStars(pseudo, playerPos) {
+  const ef = grabStars[pseudo];
+  if (!ef) return;
+  ef.t += 0.08;
+  const n = ef.group.children.length;
+  ef.group.children.forEach((star, i) => {
+    const angle = (i / n) * Math.PI * 2 + ef.t;
+    star.position.set(
+      playerPos.x + Math.cos(angle) * 0.55,
+      playerPos.y + 1.8,   // au-dessus de la tête
+      playerPos.z + Math.sin(angle) * 0.55
+    );
+    star.rotation.y = ef.t * 2 + i;
+    // Oscillation verticale douce
+    star.position.y += Math.sin(ef.t * 3 + i) * 0.07;
+  });
+}
+
+function removeGrabStars(pseudo) {
+  const ef = grabStars[pseudo];
+  if (!ef) return;
+  scene.remove(ef.group);
+  delete grabStars[pseudo];
+}
+
+// =============================================================================
 //  BOUCLE DE JEU PRINCIPALE
 // =============================================================================
 function gameLoop(timestamp) {
@@ -788,10 +880,13 @@ function gameLoop(timestamp) {
       if (p.grabTimer <= 0) {
         p.grabbed = false;
         p.grabbedBy = null;
+        removeGrabStars(pseudo);
         broadcast({ type: 'released', pseudo });
       }
       const v = p.body.linvel();
       p.body.setLinvel({ x: v.x * 0.85, y: v.y, z: v.z * 0.85 }, true);
+      createGrabStars(pseudo);
+      updateGrabStars(pseudo, pos);
 
     } else {
       // Mouvement normal
@@ -920,6 +1015,7 @@ window.addEventListener('resize', () => {
 // =============================================================================
 loadMap();
 createFrisbee();
+createBoundaryWalls(); // Murs de sécurité invisibles pour empêcher le frisbee de sortir
 
 document.getElementById('lobby-overlay').style.display = 'flex';
 document.getElementById('hud').style.display = 'none';

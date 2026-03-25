@@ -145,7 +145,7 @@ const world = new RAPIER.World({ x: 0, y: -25, z: 0 });
 function loadMap() {
   const loader = new GLTFLoader();
   loader.load(
-    'Img/Workshop_map_V3.glb',
+    'Img/Workshop_mapV4.glb',
 
     (gltf) => {
       // ── Appliquer l'échelle globale et rotation ────────────────
@@ -272,7 +272,7 @@ function createFrisbee() {
   scene.add(mesh);
 
   const loader = new GLTFLoader();
-  loader.load('Img/frisbee.glb', (gltf) => {
+  loader.load('Img/frisbeeV2.glb', (gltf) => {
     const model = gltf.scene;
     // Ajustements visuels du modèle
     model.scale.setScalar(0.7); // Réduire la taille de la boîte à pizza

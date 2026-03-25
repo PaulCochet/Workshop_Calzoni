@@ -344,59 +344,148 @@ canvas {
   display: none;
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.85);
+  background: conic-gradient(var(--yellow2) 90deg,
+      transparent 90deg 180deg,
+      var(--yellow2) 180deg 270deg,
+      transparent 270deg), var(--yellow);
+  background-repeat: repeat;
+  background-size: 40px 40px;
   align-items: center;
   justify-content: center;
   flex-direction: column;
-  gap: 20px;
+  gap: 1.5rem;
   z-index: 50;
+  font-family: var(--font-title);
+}
+
+#end-logo {
+  width: 100%;
+  max-width: 400px;
+  margin-bottom: 0rem;
+}
+
+/* MVP BANNER */
+#end-mvp-banner {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  width: 100%;
+  max-width: 600px;
+}
+
+.mvp-band {
+  background: #fff;
+  width: 100%;
+  padding: 1.25rem 2rem;
+  border-radius: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.mvp-icon {
+  font-size: 2.2rem;
+}
+
+.mvp-name {
+  font-size: 2.2rem;
+  color: var(--black);
+  letter-spacing: -0.04em;
+}
+
+.mvp-tag {
+  background: #f39c12;
+  color: var(--black);
+  padding: 0.4rem 1.2rem;
+  border-radius: 0.5rem;
+  font-weight: 900;
+  font-size: 1.1rem;
+  text-transform: uppercase;
+  margin-top: -0.9rem;
+  z-index: 1;
 }
 
 #end-winner {
-  font-size: 2.6em;
-  color: #fff;
-  font-family: monospace;
+  font-size: 1.8rem;
+  color: var(--black);
+  letter-spacing: -0.04em;
+  margin: 0.25rem 0;
 }
 
-.final-scores {
+/* SCOREBOARD */
+.end-scoreboard {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  width: 100%;
+  max-width: 600px;
+}
+
+.end-col {
   display: flex;
-  gap: 50px;
-  font-family: monospace;
+  flex-direction: column;
 }
 
-.final-score-block {
-  text-align: center;
+.end-header {
+  background: var(--black);
+  color: var(--white);
+  font-size: 1.1rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem 0.5rem 0 0;
+  text-transform: uppercase;
 }
 
-.final-score-block span:first-child {
-  display: block;
-  font-size: 13px;
-  color: #aaa;
-  margin-bottom: 4px;
+.end-list {
+  background: rgba(254, 252, 225, 0.4);
+  padding: 0.5rem;
+  border-radius: 0 0 0.5rem 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-height: 8rem;
 }
 
-.final-score-block span:last-child {
-  display: block;
-  font-size: 52px;
+.end-player-row {
+  background: var(--white);
+  color: var(--black);
+  padding: 0.75rem 1rem;
+  border-radius: 0.25rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 1.1rem;
   font-weight: bold;
 }
 
-#final-a {
-  color: #3498db;
+.p-points {
+  color: #f39c12;
+  font-size: 1rem;
 }
 
-#final-b {
-  color: #e74c3c;
+.end-empty {
+  text-align: center;
+  padding: 1rem;
+  color: #888;
+  font-size: 0.9rem;
 }
 
 #restart-btn {
   font-size: 1.1em;
-  padding: 14px 36px;
-  background: #FFD700;
-  color: #000;
+  padding: 1rem 2.5rem;
+  background: var(--black);
+  color: var(--white);
   border: none;
   border-radius: 10px;
   cursor: pointer;
-  font-family: monospace;
   font-weight: bold;
+  box-shadow: 0 0.25rem 0 var(--shadows);
+  margin-top: 1rem;
+}
+
+#restart-btn:active {
+  transform: translateY(0.15rem);
+  box-shadow: 0 0.1rem 0 var(--shadows);
 }

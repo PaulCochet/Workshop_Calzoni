@@ -86,7 +86,6 @@
 
     <!-- Code QR pour rejoindre, déplacé dans le coin du lobby -->
     <div id="lobby-qr-container">
-      <div id="lobby-qr-label">📱 Scanner pour rejoindre</div>
       <div id="lobby-qr-code"></div>
     </div>
 
@@ -101,18 +100,24 @@
 
   <!-- Fin de partie -->
   <div id="end-overlay">
+    <img id="end-logo" src="Img/Tipolino Logo.svg" alt="Tipolino">
+
+    <div id="end-mvp-banner"></div>
+
     <div id="end-winner"></div>
-    <div class="final-scores">
-      <div class="final-score-block">
-        <span>Équipe A</span>
-        <span id="final-a" style="color:#3498db">0</span>
+
+    <div class="end-scoreboard">
+      <div class="end-col">
+        <div class="end-header">PIZZAIOLOS</div>
+        <div id="end-list-a" class="end-list"></div>
       </div>
-      <div class="final-score-block">
-        <span>Équipe B</span>
-        <span id="final-b" style="color:#e74c3c">0</span>
+      <div class="end-col">
+        <div class="end-header">CLIENTS</div>
+        <div id="end-list-b" class="end-list"></div>
       </div>
     </div>
-    <button id="restart-btn">🔄 Retour au lobby</button>
+
+    <button id="restart-btn">Recommencer une partie</button>
   </div>
 
   <!-- ─── Scripts ─────────────────────────────────────────────── -->

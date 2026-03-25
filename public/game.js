@@ -430,6 +430,7 @@ function spawnPlayer(pseudo, team, isHost) {
     inputDir: { x: 0, z: 0 },
     lastThrowTime: 0,
     mireAngle: 0,
+    points: 0,
   };
 }
 
@@ -641,14 +642,28 @@ function startGame() {
   updateScoreboard();
 }
 
-function stunPlayer(pseudo) {
+function stunPlayer(pseudo, throwerPseudo = null) {
   const p = players[pseudo];
   if (!p || p.stunned) return;
   p.stunned = true;
   p.stunTimer = STUN_DURATION;
   p.inputDir = { x: 0, z: 0 };
   p.grabbed = false;
-  if (p.team === 'A') scoreB++; else scoreA++;
+  // Supprimer les étoiles de grab si le joueur vient d'être touché
+  removeGrabStars(pseudo);
+
+  if (p.team === 'A') {
+    scoreB++;
+    if (throwerPseudo && players[throwerPseudo] && players[throwerPseudo].team === 'B') {
+      players[throwerPseudo].points++;
+    }
+  } else {
+    scoreA++;
+    if (throwerPseudo && players[throwerPseudo] && players[throwerPseudo].team === 'A') {
+      players[throwerPseudo].points++;
+    }
+  }
+
   if (frisbeeOwner === pseudo) {
     frisbeeOwner = null;
     broadcast({ type: 'frisbeeDropped' });
@@ -658,13 +673,65 @@ function stunPlayer(pseudo) {
 }
 
 function showEndScreen() {
-  document.getElementById('final-a').textContent = scoreA;
-  document.getElementById('final-b').textContent = scoreB;
-  document.getElementById('end-winner').textContent =
+  const overlay = document.getElementById('end-overlay');
+  const winnerEl = document.getElementById('end-winner');
+  const bannerEl = document.getElementById('end-mvp-banner');
+  const listA = document.getElementById('end-list-a');
+  const listB = document.getElementById('end-list-b');
+
+  winnerEl.textContent =
     scoreA > scoreB ? '🏆 Équipe A gagne !'
       : scoreB > scoreA ? '🏆 Équipe B gagne !'
         : '🤝 Égalité !';
-  document.getElementById('end-overlay').style.display = 'flex';
+
+  // Calcul MVP
+  let mvp = null;
+  let maxPoints = 0;
+  let tie = false;
+
+  const allPlayers = Object.values(players);
+  for (const p of allPlayers) {
+    if (p.points > maxPoints) {
+      maxPoints = p.points;
+      mvp = p;
+      tie = false;
+    } else if (p.points === maxPoints && maxPoints > 0) {
+      tie = true;
+    }
+  }
+
+  if (mvp && maxPoints > 0 && !tie) {
+    bannerEl.innerHTML = `
+      <div class="mvp-band">
+        <span class="mvp-icon">🍕</span>
+        <span class="mvp-name">${escapeHtml(mvp.pseudo)}</span>
+      </div>
+      <div class="mvp-tag">MVP</div>
+    `;
+    bannerEl.style.display = 'block';
+  } else {
+    bannerEl.style.display = 'none';
+  }
+
+  // Scoreboard détaillé
+  const playersA = allPlayers.filter(p => p.team === 'A').sort((a, b) => b.points - a.points);
+  const playersB = allPlayers.filter(p => p.team === 'B').sort((a, b) => b.points - a.points);
+
+  listA.innerHTML = playersA.map(p => `
+    <div class="end-player-row">
+      <span class="p-name">${escapeHtml(p.pseudo)}</span>
+      <span class="p-points">+${p.points} points</span>
+    </div>
+  `).join('') || '<div class="end-empty">Aucun joueur</div>';
+
+  listB.innerHTML = playersB.map(p => `
+    <div class="end-player-row">
+      <span class="p-name">${escapeHtml(p.pseudo)}</span>
+      <span class="p-points">+${p.points} points</span>
+    </div>
+  `).join('') || '<div class="end-empty">Aucun joueur</div>';
+
+  overlay.style.display = 'flex';
 
   document.getElementById('restart-btn').onclick = () => {
     document.getElementById('end-overlay').style.display = 'none';
@@ -917,7 +984,7 @@ function updateFrisbee(dt) {
         if (spd > 2 && frisbeeLastThrower && frisbeeLastThrower !== pseudo) {
           const thrower = players[frisbeeLastThrower];
           if (thrower && thrower.team !== p.team) {
-            stunPlayer(pseudo);
+            stunPlayer(pseudo, frisbeeLastThrower);
             frisbee.body.setLinvel({ x: 0, y: 0, z: 0 }, true);
             continue;
           }

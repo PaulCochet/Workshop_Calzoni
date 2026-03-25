@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Démo Transition Lottie</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
+
+    <style>
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', sans-serif;
+            overflow: hidden;
+        }
+
+        /* Styles des pages */
+        .page {
+            position: absolute;
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #page1 {
+            background-color: #ffefd5;
+        }
+
+        #page2 {
+            background-color: #d5efff;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Le conteneur de transition (le rideau) */
+        #transition-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 100;
+            pointer-events: none;
+            /* Pour ne pas bloquer les clics quand il est transparent */
+            background-color: transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden; /* Masquer dynamiquement le watermark */
+        }
+
+        button {
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            border: none;
+            border-radius: 8px;
+            background: #333;
+            color: white;
+            transition: transform 0.2s;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="page1" class="page">
+        <h1>🏠 Bienvenue sur la Page 1</h1>
+        <button onclick="changePage('page1', 'page2')">Aller à la Page 2 →</button>
+    </div>
+
+    <div id="page2" class="page hidden">
+        <h1>🚀 Vous êtes sur la Page 2</h1>
+        <button onclick="changePage('page2', 'page1')">← Retour à la Page 1</button>
+    </div>
+
+    <div id="transition-overlay">
+        <!-- Lottie dimensionné à 120% pour pousser le watermark hors du container parent caché -->
+        <div id="lottie-container" style="width: 120vw; height: 120vh; flex-shrink: 0;"></div>
+    </div>
+
+    <script>
+        // Initialisation de l'animation
+        // J'utilise une animation de "chargement/transition" publique
+        const anim = lottie.loadAnimation({
+            container: document.getElementById('lottie-container'),
+            renderer: 'svg',
+            loop: false,
+            autoplay: false,
+            path: 'my-animation.json', // Le lien vers ton fichier local Lottie
+            rendererSettings: {
+                preserveAspectRatio: 'xMidYMid slice' // Permet de prendre tout l'écran en coupant ce qui dépasse plutôt que d'avoir des bandes vides
+            }
+        });
+
+        function changePage(fromId, toId) {
+            const overlay = document.getElementById('transition-overlay');
+
+            // 1. On s'assure que l'overlay est visible pour la transition tout en restant transparent
+            overlay.style.pointerEvents = "auto";
+            overlay.style.backgroundColor = "transparent"; 
+
+            // 2. On joue l'animation
+            anim.goToAndPlay(0, true);
+
+            // 3. Timing : Au milieu de l'animation (ex: après 600ms), on switch les pages
+            // C'est là que l'illusion est parfaite
+            setTimeout(() => {
+                document.getElementById(fromId).classList.add('hidden');
+                document.getElementById(toId).classList.remove('hidden');
+            }, 600);
+
+            // 4. Une fois l'animation finie, on libère la vue et on rend les clics possibles
+            anim.onComplete = () => {
+                overlay.style.backgroundColor = "transparent";
+                overlay.style.pointerEvents = "none";
+                console.log("Transition terminée !");
+            };
+        }
+    </script>
+</body>
+
+</html>

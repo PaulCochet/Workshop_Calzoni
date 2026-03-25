@@ -75,6 +75,7 @@ let gamePhase = 'lobby';   // 'lobby' | 'playing' | 'ended'
 let gameTimer = GAME_DURATION;
 let scoreA = 0, scoreB = 0;
 let pointAnim = null;
+let transitionAnim = null;
 let lastTimestamp = 0;
 
 let ws;
@@ -695,6 +696,29 @@ function stunPlayer(pseudo, throwerPseudo = null) {
   updateScoreboard();
 }
 
+function startEndGameTransition() {
+  const overlay = document.getElementById('transition-overlay');
+  if (!transitionAnim || !overlay) {
+    showEndScreen();
+    return;
+  }
+
+  overlay.style.display = "flex";
+  overlay.style.pointerEvents = "auto";
+  transitionAnim.goToAndPlay(0, true);
+
+  // Switch UI au milieu de l'animation
+  setTimeout(() => {
+    showEndScreen();
+  }, 600);
+
+  transitionAnim.removeEventListener('complete');
+  transitionAnim.addEventListener('complete', () => {
+    overlay.style.pointerEvents = "none";
+    overlay.style.display = "none";
+  });
+}
+
 function showEndScreen() {
   const overlay = document.getElementById('end-overlay');
   const highlightEl = document.getElementById('end-winner-highlight');
@@ -882,7 +906,7 @@ function gameLoop(timestamp) {
     if (gameTimer <= 0) {
       gameTimer = 0;
       gamePhase = 'ended';
-      showEndScreen();
+      startEndGameTransition();
     }
     if (Math.round(timestamp / 1000) % 1 === 0) updateScoreboard();
   }
@@ -1087,6 +1111,17 @@ if (typeof lottie !== 'undefined') {
     loop: false,
     autoplay: false,
     path: 'exemple/lottie_clean.json'
+  });
+  
+  transitionAnim = lottie.loadAnimation({
+    container: document.getElementById('transition-lottie-container'),
+    renderer: 'svg',
+    loop: false,
+    autoplay: false,
+    path: 'exemple/my-animation.json',
+    rendererSettings: {
+      preserveAspectRatio: 'xMidYMid slice'
+    }
   });
 }
 

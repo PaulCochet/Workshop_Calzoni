@@ -544,3 +544,25 @@ canvas {
   transform: translateY(0.15rem);
   box-shadow: 0 0.1rem 0 var(--shadows);
 }
+
+/* ── TRANSITION LOTTIE ───────────────────────── */
+#transition-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 999;
+  pointer-events: none;
+  background-color: transparent;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+#transition-lottie-container {
+  width: 120vw;
+  height: 120vh;
+  flex-shrink: 0;
+}

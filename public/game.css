@@ -51,14 +51,15 @@ canvas {
   top: 0;
   left: 0;
   right: 0;
-  display: none !important; /* Force hiding the HUD so the map takes all the space visually */
+  display: none;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 24px;
-  background: rgba(0, 0, 0, 0.65);
+  padding: 20px 40px;
+  background: transparent;
   font-family: monospace;
   z-index: 10;
   pointer-events: none;
+  text-shadow: 0 0 8px rgba(0,0,0,0.8);
 }
 
 .team-block {

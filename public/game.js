@@ -17,8 +17,8 @@ import RAPIER from 'https://cdn.jsdelivr.net/npm/@dimforge/rapier3d-compat@0.11.
 // =============================================================================
 //  CONSTANTES
 // =============================================================================
-const PLAYER_SPEED = 4;
-const STUN_DURATION = 3;       // secondes
+const PLAYER_SPEED = 3;
+const STUN_DURATION = 3;       // secondes 
 const GAME_DURATION = 140;     // secondes
 const FRISBEE_SPEED = 18;      // force d'impulsion au lancer
 const FRISBEE_HEIGHT = 1;     // hauteur fixe du frisbee au-dessus du sol
@@ -304,14 +304,14 @@ function createFrisbee() {
 // (fallback si les colliders de la map ne couvrent pas tout le périmètre)
 const MAP_HALF_W = 10;  // demi-largeur en unités monde
 const MAP_HALF_D = 7;   // demi-profondeur en unités monde
-const WALL_H     = 4;   // hauteur des murs invisibles
+const WALL_H = 4;   // hauteur des murs invisibles
 
 function createBoundaryWalls() {
   const walls = [
     RAPIER.ColliderDesc.cuboid(0.2, WALL_H, MAP_HALF_D).setTranslation(-MAP_HALF_W, WALL_H, 0),  // gauche
-    RAPIER.ColliderDesc.cuboid(0.2, WALL_H, MAP_HALF_D).setTranslation( MAP_HALF_W, WALL_H, 0),  // droite
+    RAPIER.ColliderDesc.cuboid(0.2, WALL_H, MAP_HALF_D).setTranslation(MAP_HALF_W, WALL_H, 0),  // droite
     RAPIER.ColliderDesc.cuboid(MAP_HALF_W, WALL_H, 0.2).setTranslation(0, WALL_H, -MAP_HALF_D), // haut
-    RAPIER.ColliderDesc.cuboid(MAP_HALF_W, WALL_H, 0.2).setTranslation(0, WALL_H,  MAP_HALF_D), // bas
+    RAPIER.ColliderDesc.cuboid(MAP_HALF_W, WALL_H, 0.2).setTranslation(0, WALL_H, MAP_HALF_D), // bas
     RAPIER.ColliderDesc.cuboid(MAP_HALF_W, 0.2, MAP_HALF_D).setTranslation(0, -0.2, 0),         // sol
   ];
   walls.forEach(d => world.createCollider(d.setCollisionGroups(CG_COL).setRestitution(0.9).setFriction(0.05)));

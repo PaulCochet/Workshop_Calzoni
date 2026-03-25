@@ -376,7 +376,8 @@ function createMap() {
   ];
   obsDefs.forEach(def => {
     const s = new Sprite(def.x, def.y, def.w, def.h, 'static');
-    s.color = color(50, 55, 75); s.stroke = color(90, 100, 130); s.strokeWeight = 2; s.bounciness = 0.4;
+    s.color = color(50, 55, 75, 40); s.stroke = color(90, 100, 130, 0); s.strokeWeight = 0; s.bounciness = 0.4;
+    s.visible = false; // Hide the 2D rectangle so the 3D model is seen instead
     obstacles.push(s);
   });
 }
@@ -451,7 +452,7 @@ function setup() {
 //  DRAW
 // =============================================================================
 function draw() {
-  background(15, 15, 25);
+  clear(); // make the canvas transparent
   const dt = deltaTime / 1000;
   drawArena();
 
@@ -546,12 +547,12 @@ function draw() {
 
 function drawArena() {
   push();
-  fill(18, 22, 38); noStroke(); rect(0, 0, width, height);
-  stroke(35, 45, 65); strokeWeight(2); line(width / 2, 0, width / 2, height);
+  // We keep the center geometry and team colors as overlays on top of the 3D map
+  stroke(35, 45, 65, 120); strokeWeight(2); line(width / 2, 0, width / 2, height);
   noStroke();
   fill(...COLOR_TEAM_A, 18); rect(0, 0, width * 0.35, height);
   fill(...COLOR_TEAM_B, 18); rect(width * 0.65, 0, width * 0.35, height);
-  noFill(); stroke(35, 45, 65); strokeWeight(2); circle(width / 2, height / 2, 180);
+  noFill(); stroke(35, 45, 65, 120); strokeWeight(2); circle(width / 2, height / 2, 180);
   pop();
 }
 

@@ -680,9 +680,9 @@ function showEndScreen() {
   const listB = document.getElementById('end-list-b');
 
   winnerEl.textContent =
-    scoreA > scoreB ? '🏆 Équipe A gagne !'
-      : scoreB > scoreA ? '🏆 Équipe B gagne !'
-        : '🤝 Égalité !';
+    scoreA > scoreB ? 'Équipe Pizzaïolos gagne !'
+      : scoreB > scoreA ? 'Équipe Clients gagne !'
+        : 'Égalité !';
 
   // Calcul MVP
   let mvp = null;
@@ -703,7 +703,7 @@ function showEndScreen() {
   if (mvp && maxPoints > 0 && !tie) {
     bannerEl.innerHTML = `
       <div class="mvp-band">
-        <span class="mvp-icon">🍕</span>
+        <span class="mvp-icon">⭐</span>
         <span class="mvp-name">${escapeHtml(mvp.pseudo)}</span>
       </div>
       <div class="mvp-tag">MVP</div>

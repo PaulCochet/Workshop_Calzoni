@@ -67,10 +67,10 @@ canvas {
   top: 0;
   left: 0;
   right: 0;
-  height: 5rem;
+  height: 6rem;
   display: none;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   padding: 0 2rem;
   background: conic-gradient(var(--yellow2) 90deg,
       transparent 90deg 180deg,
@@ -80,7 +80,7 @@ canvas {
   background-size: 40px 40px;
   z-index: 10;
   pointer-events: none;
-  gap: 1rem;
+  gap: 3rem;
   font-family: var(--font-title);
 }
 
@@ -104,14 +104,10 @@ canvas {
   font-size: 1.5rem;
   letter-spacing: -0.04em;
   flex: 0 0 auto;
-  margin: 0 3rem;
 }
 
-/* Bloc central centré absolument */
+/* Bloc central dans le flux flex */
 #hud-center {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
   display: flex;
   align-items: center;
   gap: 0;
@@ -124,7 +120,7 @@ canvas {
 
 .hud-score {
   font-size: 3rem;
-  color: var(--white);
+  color: var(--yellow);
   padding: 0 1.25rem;
   line-height: 1;
 }
@@ -139,11 +135,13 @@ canvas {
 }
 
 #timer {
-  font-size: 1.875rem;
-  /* h3 = environ 1.5rem * 1.25, environ 30px */
+  font-size: 1.125rem;
   font-weight: bold;
   color: var(--white);
   line-height: 1;
+  min-width: 4ch;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
 }
 
 #timer.danger {
@@ -240,6 +238,16 @@ canvas {
 }
 
 .lobby-entry {
+  background: var(--white);
+  color: var(--black);
+  padding: 0.6rem 1rem;
+  border-radius: 0.25rem;
+  font-size: 1.1rem;
+  text-align: left;
+  font-weight: bold;
+}
+
+.lobby-player {
   background: var(--white);
   color: var(--black);
   padding: 0.6rem 1rem;

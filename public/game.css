@@ -75,6 +75,7 @@ canvas {
   pointer-events: none;
   gap: 3rem;
   font-family: var(--font-title);
+  overflow: visible;
 }
 
 /* Logo gauche — absolute pour ne pas gêner le centrage */
@@ -113,19 +114,23 @@ canvas {
   overflow: visible;
 }
 
-/* Demi-cercles festonnés sous le bloc central */
-#hud-center::after {
-  content: '';
+/* Conteneur des demi-cercles — positionné sous le bloc noir */
+#hud-scallops {
   position: absolute;
   top: 100%;
   left: 0;
   right: 0;
-  height: 18px;
-  background: radial-gradient(circle at 50% 0%, var(--black) 50%, transparent 51%);
-  background-size: 36px 36px;
-  background-repeat: repeat-x;
-  background-position: center top;
+  display: flex;
+  flex-direction: row;
   pointer-events: none;
+}
+
+/* Chaque demi-cercle prend 1/7 de la largeur */
+.scallop {
+  flex: 1;
+  aspect-ratio: 2 / 1;
+  background: var(--black);
+  border-radius: 0 0 50% 50% / 0 0 100% 100%;
 }
 
 .hud-score {

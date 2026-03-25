@@ -22,7 +22,7 @@ const STUN_DURATION = 3;       // secondes
 const GAME_DURATION = 140;     // secondes
 const FRISBEE_SPEED = 18;      // force d'impulsion au lancer
 const FRISBEE_HEIGHT = 2;     // hauteur fixe du frisbee au-dessus du sol
-const GRAB_RADIUS = 6.0;     // distance max pour attraper (augmentée)
+const GRAB_RADIUS = 4.0;     // distance max pour attraper (augmentée)
 const PUSH_DURATION = 0.3;     // secondes de recul
 const THROW_COOLDOWN = 0.6;
 const KNOCKBACK_FORCE = 28;      // impulsion de recul (augmentée)
@@ -275,7 +275,7 @@ function createFrisbee() {
   loader.load('Img/frisbeeV2.glb', (gltf) => {
     const model = gltf.scene;
     // Ajustements visuels du modèle
-    model.scale.setScalar(0.5); // Réduire la taille de la boîte à pizza
+    model.scale.setScalar(0.6); // Réduire la taille de la boîte à pizza
     model.traverse(child => {
       if (child.isMesh) {
         child.castShadow = true;

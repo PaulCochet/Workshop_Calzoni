@@ -1040,17 +1040,12 @@ function generateQR(container, url, size) {
 function showIngameQR() {
   const el = document.getElementById('ingame-qr');
   const container = document.getElementById('ingame-qr-code');
-  if (!el || !container || container.childElementCount > 0) {
-    if (el) el.style.display = 'flex';
-    return;
-  }
-  fetch('/api/ip')
-    .then(r => r.json())
-    .then(data => {
-      generateQR(container, `http://${data.ip}:${data.port}/controller`, 80);
-      el.style.display = 'flex';
-    })
-    .catch(console.error);
+  if (!el || !container) return;
+  // Régénérer le QR à chaque fois (URL peut changer entre local et cloud)
+  container.innerHTML = '';
+  const controllerURL = `${window.location.protocol}//${window.location.host}/controller`;
+  generateQR(container, controllerURL, 80);
+  el.style.display = 'flex';
 }
 
 // =============================================================================

@@ -19,6 +19,7 @@ import RAPIER from 'https://cdn.jsdelivr.net/npm/@dimforge/rapier3d-compat@0.11.
 // =============================================================================
 const PLAYER_SPEED = 4;
 const STUN_DURATION = 1.5;       // secondes 
+const INVINCIBILITY_DURATION = 2; // secondes d'invincibilité après stun
 const GAME_DURATION = 120;     // secondes
 const FRISBEE_SPEED = 10;      // force d'impulsion au lancer
 const FRISBEE_HEIGHT = 2;     // hauteur fixe du frisbee au-dessus du sol
@@ -446,6 +447,7 @@ function spawnPlayer(pseudo, team, isHost) {
     lastThrowTime: 0,
     mireAngle: 0,
     points: 0,
+    invincible: false, invincibleTimer: 0,
   };
 }
 
@@ -1035,6 +1037,9 @@ function gameLoop(timestamp) {
       if (p.stunTimer <= 0) {
         p.stunned = false;
         removeStunEffect(pseudo);
+        // Activer l'invincibilité post-stun
+        p.invincible = true;
+        p.invincibleTimer = INVINCIBILITY_DURATION;
         broadcast({ type: 'recovered', pseudo });
       }
       // Ralentissement progressif
@@ -1058,7 +1063,28 @@ function gameLoop(timestamp) {
       const speed = (frisbeeOwner === pseudo) ? PLAYER_SPEED * 0.65 : PLAYER_SPEED;
       p.vel.x = p.inputDir.x * speed;
       p.vel.z = p.inputDir.z * speed;
-    } else {
+    }
+
+    // Timer d'invincibilité
+    if (p.invincible) {
+      p.invincibleTimer -= dt;
+      if (p.invincibleTimer <= 0) {
+        p.invincible = false;
+        // Remettre l'opacité normale
+        p.mesh.traverse(c => { if (c.isMesh && c.material) c.material.opacity = 1; });
+      } else {
+        // Clignotement : alterner visible/semi-transparent
+        const blink = Math.sin(p.invincibleTimer * 12) > 0;
+        p.mesh.traverse(c => {
+          if (c.isMesh && c.material) {
+            c.material.transparent = true;
+            c.material.opacity = blink ? 1.0 : 0.3;
+          }
+        });
+      }
+    }
+
+    if (!p.stunned && !p.grabbed && gamePhase !== 'playing') {
       // Pas de mouvement pendant le chargement ou menu
       p.vel.x = 0;
       p.vel.z = 0;
@@ -1183,7 +1209,7 @@ function updateFrisbee(dt) {
 
       if (dist < 1.5) {
         // Frisbee lancé par un ennemi → stun
-        if (spd > 2 && frisbeeLastThrower && frisbeeLastThrower !== pseudo) {
+        if (spd > 3.5 && frisbeeLastThrower && frisbeeLastThrower !== pseudo && !p.invincible) {
           const thrower = players[frisbeeLastThrower];
           if (thrower && thrower.team !== p.team) {
             stunPlayer(pseudo, frisbeeLastThrower);

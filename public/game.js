@@ -1422,7 +1422,7 @@ function initPeer() {
   console.log('Jeu : Init PeerJS sur le CLOUD');
 
   // Utilise le cloud PeerJS (0.peerjs.com) par défaut pour plus de fiabilité
-  peer = new Peer('GRAND_ECRAN_PIZZA_ULTIMATES'); 
+  peer = new Peer('GRAND_ECRAN_PIZZA_ULTIMATES');
 
   peer.on('open', id => {
     console.log('PeerJS (Game) ouvert sur le Cloud avec ID:', id);

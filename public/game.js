@@ -85,6 +85,12 @@ const bgMusic = new Audio('Musique de fond .m4a');
 bgMusic.loop = true;
 bgMusic.volume = 0.30;
 
+const throwSFX = new Audio('ThrowSFX.mp3');
+throwSFX.volume = 0.5;
+
+const hitSFX = new Audio('HitSFX.mp3');
+hitSFX.volume = 0.6;
+
 // Débloquer l'audio via Bouton (Anti-Autoplay des navigateurs)
 let audioUnlocked = false;
 let musicWanted = false; // Le joueur a activé la musique ?
@@ -602,6 +608,11 @@ function handleThrow(msg) {
   frisbee.body.setTranslation({ x: pos.x + Math.cos(p.mireAngle) * 0.8, y: FRISBEE_HEIGHT, z: pos.z + Math.sin(p.mireAngle) * 0.8 }, true);
   frisbee.body.setLinvel({ x: vx, y: 0, z: vz }, true);
 
+  if (audioUnlocked) {
+    throwSFX.currentTime = 0;
+    throwSFX.play().catch(() => {});
+  }
+
   broadcast({ type: 'frisbeeDropped' });
 }
 
@@ -782,6 +793,11 @@ function stunPlayer(pseudo, throwerPseudo = null) {
   p.grabbed = false;
   // Squash immédiat au stun
   p.mesh.scale.set(1.5, 0.5, 1.5);
+  
+  if (audioUnlocked) {
+    hitSFX.currentTime = 0;
+    hitSFX.play().catch(() => {});
+  }
 
   if (p.team === 'A') {
     scoreB++;

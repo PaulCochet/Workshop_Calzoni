@@ -89,7 +89,7 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(window.devicePixelRatio);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-renderer.setClearColor(0x111111);
+renderer.setClearColor(0x2a0a0a);
 document.body.insertBefore(renderer.domElement, document.body.firstChild);
 
 // CSS2D pour les labels joueurs (noms au-dessus des persos)
@@ -101,12 +101,12 @@ labelRenderer.domElement.style.pointerEvents = 'none';
 document.body.appendChild(labelRenderer.domElement);
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x111111);
-scene.fog = new THREE.Fog(0x111111, 20, 60);
+scene.background = new THREE.Color(0x2a0a0a);
+scene.fog = new THREE.Fog(0x2a0a0a, 20, 60);
 
 // Caméra — vue isométrique style Overcooked
-const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 200);
-camera.position.set(0, 14, 9);
+const camera = new THREE.PerspectiveCamera(57.5, window.innerWidth / window.innerHeight, 0.1, 200);
+camera.position.set(0, 14.5, 10);
 camera.lookAt(0, 0, 0);
 
 // Lumières
@@ -129,8 +129,8 @@ fillLight.position.set(-5, 5, -5);
 scene.add(fillLight);
 
 // Sol de secours (visible si la map ne charge pas)
-const floorGeo = new THREE.PlaneGeometry(30, 20);
-const floorMat = new THREE.MeshLambertMaterial({ color: 0x1a1a2e });
+const floorGeo = new THREE.PlaneGeometry(200, 200);
+const floorMat = new THREE.MeshLambertMaterial({ color: 0x3a0e0e });
 const floor = new THREE.Mesh(floorGeo, floorMat);
 floor.rotation.x = -Math.PI / 2;
 floor.receiveShadow = true;

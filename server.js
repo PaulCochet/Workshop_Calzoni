@@ -70,7 +70,7 @@ wss.on('connection', (ws) => {
   });
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 
 process.on('uncaughtException', (err) => {
   console.error('ERREUR CRITIQUE (Uncaught Exception) :', err);

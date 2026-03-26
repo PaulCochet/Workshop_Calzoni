@@ -208,14 +208,14 @@ function joinTeam(t) {
     navigator.mediaDevices.getUserMedia({ video: { width: 320, height: 240, facingMode: 'user' }, audio: false })
       .then(stream => {
         localStream = stream;
-        
+
         // Forcer le flux à charger sur le téléphone pour ne pas qu'il s'endorme
         const dummyVid = document.getElementById('dummy-local-video');
         if (dummyVid) {
           dummyVid.srcObject = stream;
-          dummyVid.onloadedmetadata = () => { dummyVid.play().catch(()=>{}); };
+          dummyVid.onloadedmetadata = () => { dummyVid.play().catch(() => { }); };
         }
-        
+
         initPeer();
       })
       .catch(err => {
@@ -239,11 +239,11 @@ function joinTeam(t) {
 
 function initPeer() {
   if (peer) return;
-  
+
   // ID unique pour éviter les collisions sur le cloud
-  const cloudId = ('ULTI_' + pseudo + '_' + Math.floor(Math.random()*10000)).replace(/[^a-zA-Z0-9]/g, '');
+  const cloudId = ('ULTI_' + pseudo + '_' + Math.floor(Math.random() * 10000)).replace(/[^a-zA-Z0-9]/g, '');
   console.log('Manette : Init PeerJS sur le CLOUD avec ID:', cloudId);
-  
+
   peer = new Peer(cloudId);
 
   peer.on('open', id => {

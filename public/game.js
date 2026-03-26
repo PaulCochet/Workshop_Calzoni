@@ -597,7 +597,16 @@ function connectWebSocket() {
     else if (msg.type === 'startGame') startGame();
     else if (msg.type === 'restartGame') handleRestart();
     else if (msg.type === 'getState') handleGetState();
+    else if (msg.type === 'disconnect') handleDisconnect(msg);
   };
+}
+
+function handleDisconnect(msg) {
+  removePlayer(msg.pseudo);
+  // Si on est dans le lobby, on rafraîchit immédiatement l'écran
+  if (gamePhase === 'lobby') {
+    updateLobbyUI();
+  }
 }
 
 function broadcast(obj) {
@@ -989,7 +998,7 @@ function handleRestart() {
   document.getElementById('hud').style.display = 'none';
   document.getElementById('ingame-qr').style.display = 'none';
   gamePhase = 'lobby'; scoreA = scoreB = 0; gameTimer = GAME_DURATION;
-  for (const p in players) removePlayer(p);
+  Object.keys(players).forEach(p => removePlayer(p));
   resetFrisbee();
   updateLobbyUI();
   broadcast({ type: 'returnToLobby' });

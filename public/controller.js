@@ -126,10 +126,10 @@ function showEndResult(winningTeam, mvpPseudo) {
     mvpTag.style.display = 'none';
   }
 
-  // Bouton Relancer (seulement pour le host)
+  // Bouton Relancer (affiché pour tout le monde quand les scores s'affichent)
   const restartBtn = document.getElementById('restart-game-btn-end');
   if (restartBtn) {
-    restartBtn.style.display = isHost ? 'block' : 'none';
+    restartBtn.style.display = 'flex';
   }
 }
 
@@ -199,6 +199,11 @@ document.getElementById('start-game-btn').addEventListener('click', () => {
 });
 
 // Fin de partie → relancer (tout le monde ou host ?)
+document.getElementById('restart-game-btn-end').addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  send({ type: 'restartGame', pseudo });
+});
+
 document.getElementById('restart-game-btn-end').addEventListener('click', () => {
   send({ type: 'restartGame', pseudo });
 });

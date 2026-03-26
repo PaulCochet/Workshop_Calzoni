@@ -123,10 +123,14 @@
   <!-- ÉCRAN FINAL : RÉSULTATS -->
   <div id="end-screen">
     <div id="end-mvp-tag" style="display: none;">Vous êtes le MVP</div>
-    <div id="end-result-banner">
-      <h1 id="end-result-text">Gagné !</h1>
+    <div class="end-layout-row">
+      <div id="end-result-banner">
+        <h1 id="end-result-text">Gagné !</h1>
+      </div>
+      <button id="restart-game-btn-end" class="btn-restart" style="display: none;">
+        <img src="Img/restart.svg" alt="Relancer">
+      </button>
     </div>
-    <button id="restart-game-btn-end" class="btn-primary" style="display: none; margin-top: 2rem; max-width: 20rem;">Relancer une partie</button>
   </div>
 
   <script src="controller.js"></script>

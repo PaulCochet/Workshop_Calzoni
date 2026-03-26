@@ -8,6 +8,7 @@ const { WebSocketServer, WebSocket } = require('ws');
 const path = require('path');
 
 const app = express();
+app.set('trust proxy', 1); // Indispensable pour Railway/Proxies
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
 
@@ -82,9 +83,9 @@ server.on('error', (err) => {
   console.error('ERREUR SERVEUR HTTP :', err);
 });
 
-server.listen(PORT, '0.0.0.0', () => {
+server.listen(PORT, () => {
   console.log(`─────────────────────────────────────────`);
   console.log(`Serveur prêt sur port : ${PORT}`);
-  console.log(`URL locale : http://0.0.0.0:${PORT}`);
+  console.log(`Prêt à recevoir des connexions !`);
   console.log(`─────────────────────────────────────────`);
 });

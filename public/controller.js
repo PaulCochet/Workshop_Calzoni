@@ -44,6 +44,7 @@ const screenLogin = document.getElementById('login-screen');
 const screenTeam = document.getElementById('team-screen');
 const screenLobby = document.getElementById('lobby-screen');
 const screenControl = document.getElementById('control-screen');
+const screenLoading = document.getElementById('loading-screen-controller');
 const statusEl = document.getElementById('status');
 
 // =============================================================================
@@ -58,11 +59,14 @@ function connectWebSocket() {
     let msg; try { msg = JSON.parse(event.data); } catch (e) { return; }
 
     if (msg.type === 'lobbyState') updateLobbyDisplay(msg.players);
+    if (msg.type === 'loadingStarted' && !gameStarted && pseudo && team) showLoadingBar(msg.duration);
     if (msg.type === 'gameStarted' && !gameStarted && pseudo && team) enterGame();
     if (msg.type === 'returnToLobby') returnToLobby();
 
     if (msg.type === 'hasFrisbee' && msg.pseudo === pseudo) {
-      hasFrisbee = true; updateActionButtons();
+      hasFrisbee = true;
+      if (navigator.vibrate) navigator.vibrate(40);
+      updateActionButtons();
     }
     if (msg.type === 'frisbeeDropped' && hasFrisbee) {
       hasFrisbee = false; updateActionButtons();
@@ -116,10 +120,33 @@ function showEndResult(winningTeam, mvpPseudo) {
   }
 
   // MVP ?
-  if (mvpPseudo === pseudo) {
+  if (mvpPseudo === pseudo && mvpPseudo !== null) {
     mvpTag.style.display = 'block';
   } else {
     mvpTag.style.display = 'none';
+  }
+
+  // Bouton Relancer (seulement pour le host)
+  const restartBtn = document.getElementById('restart-game-btn-end');
+  if (restartBtn) {
+    restartBtn.style.display = isHost ? 'block' : 'none';
+  }
+}
+
+function showLoadingBar(duration) {
+  screenLobby.style.display = 'none';
+  screenTeam.style.display = 'none';
+  screenLogin.style.display = 'none';
+  screenLoading.style.display = 'flex';
+
+  const fill = document.getElementById('loading-bar-fill-controller');
+  if (fill) {
+    fill.style.width = '0%';
+    fill.style.transition = 'none';
+    // Force reflow
+    fill.offsetHeight;
+    fill.style.transition = `width ${duration}ms linear`;
+    fill.style.width = '100%';
   }
 }
 
@@ -171,6 +198,11 @@ document.getElementById('start-game-btn').addEventListener('click', () => {
   send({ type: 'startGame', pseudo });
 });
 
+// Fin de partie → relancer (tout le monde ou host ?)
+document.getElementById('restart-game-btn-end').addEventListener('click', () => {
+  send({ type: 'restartGame', pseudo });
+});
+
 function updateLobbyDisplay(playersList) {
   const listA = playersList.filter(p => p.team === 'A');
   const listB = playersList.filter(p => p.team === 'B');
@@ -195,6 +227,7 @@ function updateLobbyDisplay(playersList) {
 function enterGame() {
   gameStarted = true;
   screenLobby.style.display = 'none';
+  screenLoading.style.display = 'none';
   screenControl.style.display = 'flex';
   document.body.classList.add('in-game');
   document.getElementById('player-name').textContent = pseudo + ' — Équipe ' + team;

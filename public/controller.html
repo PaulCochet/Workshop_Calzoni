@@ -14,9 +14,7 @@
 
 <body>
 
-  <!-- Bouton Fullscreen -->
-  <button id="fullscreen-btn"
-    onclick="document.documentElement.requestFullscreen && document.documentElement.requestFullscreen()">⛶</button>
+
 
   <!-- Portrait Overlay (CSS-driven) -->
   <div id="portrait-overlay">
@@ -40,8 +38,8 @@
     <h3 id="hello-pseudo">Hello pseudo</h3>
     <h2>Choisis ton équipe</h2>
     <div class="team-btns">
-      <button class="btn-team" id="btn-team-a">PIZZAIOLOS</button>
-      <button class="btn-team" id="btn-team-b">CLIENTS</button>
+      <button class="btn-team" id="btn-team-a">MARGHERITA</button>
+      <button class="btn-team" id="btn-team-b">FROMAGIO</button>
     </div>
   </div>
 
@@ -53,7 +51,7 @@
       <!-- Tableaux -->
       <div class="lobby-tables">
         <div class="lobby-col">
-          <div class="lobby-header">PIZZAIOLOS</div>
+          <div class="lobby-header">MARGHERITA</div>
           <div class="lobby-list-container">
             <div id="lobby-list-a" class="lobby-list">
               <div class="lobby-empty">—</div>
@@ -61,7 +59,7 @@
           </div>
         </div>
         <div class="lobby-col">
-          <div class="lobby-header">CLIENTS</div>
+          <div class="lobby-header">FROMAGIO</div>
           <div class="lobby-list-container">
             <div id="lobby-list-b" class="lobby-list">
               <div class="lobby-empty">—</div>
@@ -111,6 +109,16 @@
   <div id="stun-overlay" style="display: none;">
     <span>😵</span><span>ÉTOURDI !</span>
   </div>
+  
+  <!-- ÉCRAN CHARGEMENT -->
+  <div id="loading-screen-controller" style="display: none;">
+    <div class="loading-bar-container">
+      <div class="loading-text">CHARGEMENT...</div>
+      <div class="loading-bar-bg">
+        <div id="loading-bar-fill-controller"></div>
+      </div>
+    </div>
+  </div>
 
   <!-- ÉCRAN FINAL : RÉSULTATS -->
   <div id="end-screen">
@@ -118,6 +126,7 @@
     <div id="end-result-banner">
       <h1 id="end-result-text">Gagné !</h1>
     </div>
+    <button id="restart-game-btn-end" class="btn-primary" style="display: none; margin-top: 2rem; max-width: 20rem;">Relancer une partie</button>
   </div>
 
   <script src="controller.js"></script>

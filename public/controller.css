@@ -105,24 +105,7 @@ h3 {
   color: #fff;
 }
 
-/* ── BOUTON FULLSCREEN ── */
-#fullscreen-btn {
-  position: absolute;
-  top: 0.75rem;
-  right: 0.75rem;
-  background: rgba(255, 255, 255, 0.1);
-  border: 0.0625rem solid rgba(255, 255, 255, 0.2);
-  color: #fff;
-  border-radius: 0.5rem;
-  width: 3rem;
-  height: 3rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.5em;
-  cursor: pointer;
-  z-index: 1000;
-}
+
 
 /* ── PORTRAIT OVERLAY ── */
 #portrait-overlay {
@@ -647,4 +630,66 @@ input[type="text"]::placeholder {
   color: #181a00;
   margin-bottom: 0;
   letter-spacing: -0.04em;
+}
+
+/* ── ÉCRAN CHARGEMENT MANETTE ── */
+#loading-screen-controller {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: conic-gradient(var(--yellow2) 90deg,
+      transparent 90deg 180deg,
+      var(--yellow2) 180deg 270deg,
+      transparent 270deg), var(--yellow);
+  background-repeat: repeat;
+  background-size: 40px 40px;
+  z-index: 2000;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.loading-bar-container {
+  width: 100%;
+  max-width: 300px;
+  text-align: center;
+}
+
+.loading-text {
+  font-family: var(--font-body);
+  font-size: 1.2rem;
+  font-weight: 900;
+  color: var(--black);
+  margin-bottom: 1rem;
+  letter-spacing: 0.1em;
+}
+
+.loading-bar-bg {
+  width: 100%;
+  height: 20px;
+  background: var(--white);
+  border: 4px solid var(--black);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 0 var(--shadows);
+}
+
+#loading-bar-fill-controller {
+  width: 0%;
+  height: 100%;
+  background: var(--black);
+  transition: width 0.1s linear;
+}
+
+/* ── BOUTON RELANCER (FIN DE PARTIE) ── */
+#restart-game-btn-end {
+  display: none;
+  /* Affiché via JS */
+  z-index: 1001;
+}
+
+#restart-game-btn-end:active {
+  transform: translateY(0.25rem);
+  box-shadow: 0 0.15rem 0 0.5rem var(--shadows);
 }

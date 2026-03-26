@@ -507,6 +507,7 @@ function connectWebSocket() {
     else if (msg.type === 'throw') handleThrow(msg);
     else if (msg.type === 'grab') handleGrab(msg);
     else if (msg.type === 'startGame') startGame();
+    else if (msg.type === 'restartGame') handleRestart();
     else if (msg.type === 'getState') handleGetState();
   };
 }
@@ -646,7 +647,8 @@ function startGame() {
   document.getElementById('loading-screen').style.display = 'flex';
 
   const progressBar = document.getElementById('loading-bar-fill');
-  const DURATION = 8000; // 8 secondes de chargement
+  const DURATION = 10000; // 10 secondes de chargement
+  broadcast({ type: 'loadingStarted', duration: DURATION });
   const start = performance.now();
 
   function animateLoading(time) {
@@ -794,9 +796,9 @@ function showEndScreen() {
   let winnerText = "";
   let winnerScore = 0;
   if (scoreA > scoreB) {
-    winnerText = "PIZZAIOLOS";
+    winnerText = "MARGHERITA";
   } else if (scoreB > scoreA) {
-    winnerText = "CLIENTS";
+    winnerText = "FROMAGIO";
   } else {
     winnerText = "ÉGALITÉ";
   }
@@ -840,29 +842,29 @@ function showEndScreen() {
   listA.innerHTML = playersA.map(renderRow).join('') || '<div class="end-empty">Aucun joueur</div>';
   listB.innerHTML = playersB.map(renderRow).join('') || '<div class="end-empty">Aucun joueur</div>';
 
-  if (headerA) headerA.textContent = `PIZZAIOLOS (${scoreA})`;
-  if (headerB) headerB.textContent = `CLIENTS (${scoreB})`;
+  if (headerA) headerA.textContent = `MARGHERITA (${scoreA})`;
+  if (headerB) headerB.textContent = `FROMAGIO (${scoreB})`;
 
   // Notification aux manettes
   broadcast({
     type: 'gameEnded',
     winningTeam: scoreA > scoreB ? 'A' : (scoreB > scoreA ? 'B' : 'tie'),
-    mvpPseudo: mvpPlayer ? mvpPlayer.pseudo : null
+    mvpPseudo: (mvpPlayer && !tie && maxPoints > 0) ? mvpPlayer.pseudo : null
   });
 
   overlay.style.display = 'flex';
+}
 
-  document.getElementById('restart-btn').onclick = () => {
-    document.getElementById('end-overlay').style.display = 'none';
-    document.getElementById('lobby-overlay').style.display = 'flex';
-    document.getElementById('hud').style.display = 'none';
-    document.getElementById('ingame-qr').style.display = 'none';
-    gamePhase = 'lobby'; scoreA = scoreB = 0; gameTimer = GAME_DURATION;
-    for (const p in players) removePlayer(p);
-    resetFrisbee();
-    updateLobbyUI();
-    broadcast({ type: 'returnToLobby' });
-  };
+function handleRestart() {
+  document.getElementById('end-overlay').style.display = 'none';
+  document.getElementById('lobby-overlay').style.display = 'flex';
+  document.getElementById('hud').style.display = 'none';
+  document.getElementById('ingame-qr').style.display = 'none';
+  gamePhase = 'lobby'; scoreA = scoreB = 0; gameTimer = GAME_DURATION;
+  for (const p in players) removePlayer(p);
+  resetFrisbee();
+  updateLobbyUI();
+  broadcast({ type: 'returnToLobby' });
 }
 
 // =============================================================================

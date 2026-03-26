@@ -69,8 +69,22 @@ wss.on('connection', (ws) => {
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
+
+process.on('uncaughtException', (err) => {
+  console.error('ERREUR CRITIQUE (Uncaught Exception) :', err);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('REJET NON GÉRÉ (Unhandled Rejection) :', reason);
+});
+
+server.on('error', (err) => {
+  console.error('ERREUR SERVEUR HTTP :', err);
+});
+
+server.listen(PORT, '0.0.0.0', () => {
   console.log(`─────────────────────────────────────────`);
-  console.log(`Ulti-mates démarré sur le port : ${PORT}`);
+  console.log(`Serveur prêt sur port : ${PORT}`);
+  console.log(`URL locale : http://0.0.0.0:${PORT}`);
   console.log(`─────────────────────────────────────────`);
 });

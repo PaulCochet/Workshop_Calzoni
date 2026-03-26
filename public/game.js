@@ -20,13 +20,13 @@ import RAPIER from 'https://cdn.jsdelivr.net/npm/@dimforge/rapier3d-compat@0.11.
 const PLAYER_SPEED = 4;
 const STUN_DURATION = 3;       // secondes 
 const GAME_DURATION = 120;     // secondes
-const FRISBEE_SPEED = 18;      // force d'impulsion au lancer
+const FRISBEE_SPEED = 10;      // force d'impulsion au lancer
 const FRISBEE_HEIGHT = 2;     // hauteur fixe du frisbee au-dessus du sol
 const GRAB_RADIUS = 4.0;     // distance max pour attraper (augmentée)
 const PUSH_DURATION = 0.3;     // secondes de recul
 const THROW_COOLDOWN = 0.6;
 const KNOCKBACK_FORCE = 28;      // impulsion de recul (augmentée)
-const FRISBEE_DAMPING = 1.8;     // résistance air du frisbee
+const FRISBEE_DAMPING = 1;     // résistance air du frisbee
 const MAP_SCALE = 0.55;    // Échelle 
 
 // =============================================================================
@@ -341,6 +341,7 @@ function spawnPlayer(pseudo, team, isHost) {
   const glbFile = team === 'A' ? 'Img/Pizzaiolo-Rouge.glb' : 'Img/Pizzaiolo-Bleu.glb';
   const mesh = new THREE.Group();
   mesh.castShadow = true;
+  mesh.rotation.order = 'YXZ'; // Y (direction) d'abord, puis tilt en local
 
   const loader = new GLTFLoader();
   loader.load(glbFile, (gltf) => {
@@ -733,6 +734,8 @@ function stunPlayer(pseudo, throwerPseudo = null) {
   p.stunTimer = STUN_DURATION;
   p.inputDir = { x: 0, z: 0 };
   p.grabbed = false;
+  // Squash immédiat au stun
+  p.mesh.scale.set(1.5, 0.5, 1.5);
 
   if (p.team === 'A') {
     scoreB++;
@@ -1070,6 +1073,14 @@ function gameLoop(timestamp) {
     p.body.setNextKinematicTranslation(newPos);
     p.mesh.position.set(newPos.x, newPos.y, newPos.z);
 
+    // Squash & Stretch
+    const spdSS = Math.hypot(p.vel.x, p.vel.z) / PLAYER_SPEED;
+    const targetScaleY = 1 + spdSS * 0.12;
+    const targetScaleXZ = 1 - spdSS * 0.06;
+    p.mesh.scale.y += (targetScaleY - p.mesh.scale.y) * 0.2;
+    p.mesh.scale.x += (targetScaleXZ - p.mesh.scale.x) * 0.2;
+    p.mesh.scale.z += (targetScaleXZ - p.mesh.scale.z) * 0.2;
+
     // Orientation du perso vers la direction du mouvement
     const spd = Math.hypot(p.inputDir.x, p.inputDir.z);
     if (spd > 0.1) {
@@ -1078,6 +1089,12 @@ function gameLoop(timestamp) {
       // Particules de pas
       if (Math.random() < 0.3) spawnFootDust(newPos);
     }
+
+    // Tilt directionnel (en espace local grâce à l'ordre YXZ)
+    const moveSpd = Math.hypot(p.inputDir.x, p.inputDir.z);
+    const tiltX = moveSpd * 0.18; // pencher vers l'avant
+    p.mesh.rotation.x += (tiltX - p.mesh.rotation.x) * 0.15;
+    p.mesh.rotation.z += (0 - p.mesh.rotation.z) * 0.15;
 
     // Indicateur frisbee (halo doré) + flèche de visée
     if (frisbeeOwner === pseudo) {

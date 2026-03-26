@@ -54,9 +54,9 @@ function cg(membership, filter) {
 }
 
 const CG_COL = cg(G_COL, G_PLAYER | G_FRISBEE); // bloque joueurs + frisbee
-const CG_LOWCOL = cg(G_LOWCOL, G_PLAYER);             // bloque joueurs seulement
+const CG_LOWCOL = cg(G_LOWCOL, G_PLAYER | G_FRISBEE);             // bloque joueurs + frisbee
 const CG_PLAYER = cg(G_PLAYER, G_COL | G_LOWCOL);     // interagit avec col + lowcol
-const CG_FRISBEE = cg(G_FRISBEE, G_COL);                 // interagit avec col seulement
+const CG_FRISBEE = cg(G_FRISBEE, G_COL | G_LOWCOL);                 // interagit avec col + lowcol
 
 const COLOR_A = 0x3498db;
 const COLOR_B = 0xe74c3c;
@@ -212,8 +212,8 @@ function loadMap() {
         const desc = RAPIER.ColliderDesc
           .trimesh(verts, indices)
           .setCollisionGroups(collisionGroup)
-          .setRestitution(isCol ? 0.55 : 0.1)   // les col rebondissent, pas les lowcol
-          .setFriction(0.3);
+          .setRestitution(0.55)   // rebond fluide pour tous (col et lowcol)
+          .setFriction(0.1);      // friction réduite pour glisser plus facilement
 
         world.createCollider(desc);
         colCount++;
@@ -352,7 +352,7 @@ function spawnPlayer(pseudo, team, isHost) {
     const center = box.getCenter(new THREE.Vector3());
     model.position.sub(center);
     model.rotation.y = -Math.PI / 2; // tourner le modèle de -90° pour aligner avec la direction
-    
+
     // Easter Egg: Dinnerbone (personnage à l'envers)
     if (pseudo.toLowerCase() === 'dinnerbone') {
       model.rotation.z = Math.PI;
@@ -640,20 +640,20 @@ function updateLobbyUI() {
 // =============================================================================
 function startGame() {
   if (gamePhase !== 'lobby') return;
-  
+
   gamePhase = 'loading';
   document.getElementById('lobby-overlay').style.display = 'none';
   document.getElementById('loading-screen').style.display = 'flex';
-  
+
   const progressBar = document.getElementById('loading-bar-fill');
   const DURATION = 8000; // 8 secondes de chargement
   const start = performance.now();
-  
+
   function animateLoading(time) {
     const elapsed = time - start;
     const progress = Math.min(elapsed / DURATION, 1);
     if (progressBar) progressBar.style.width = (progress * 100) + '%';
-    
+
     if (progress < 1) {
       requestAnimationFrame(animateLoading);
     } else {

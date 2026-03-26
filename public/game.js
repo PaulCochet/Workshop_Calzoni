@@ -18,7 +18,7 @@ import RAPIER from 'https://cdn.jsdelivr.net/npm/@dimforge/rapier3d-compat@0.11.
 //  CONSTANTES
 // =============================================================================
 const PLAYER_SPEED = 4;
-const STUN_DURATION = 3;       // secondes 
+const STUN_DURATION = 1.5;       // secondes 
 const GAME_DURATION = 120;     // secondes
 const FRISBEE_SPEED = 10;      // force d'impulsion au lancer
 const FRISBEE_HEIGHT = 2;     // hauteur fixe du frisbee au-dessus du sol
@@ -69,6 +69,7 @@ const players = {};         // pseudo → { mesh, body, label, team, ... }
 let frisbee = null;       // { mesh, body }
 let frisbeeOwner = null;
 let frisbeeLastThrower = null;
+let frisbeeIdleTimer = 0;   // Temps (sec) depuis le dernier contact avec le frisbee
 const spawnPoints = [];     // THREE.Vector3[] — rempli depuis la map GLB
 
 let gamePhase = 'lobby';   // 'lobby' | 'playing' | 'ended'
@@ -323,6 +324,7 @@ function resetFrisbee() {
   frisbee.body.setAngvel({ x: 0, y: 0, z: 0 }, true);
   frisbeeOwner = null;
   frisbeeLastThrower = null;
+  frisbeeIdleTimer = 0;
 }
 
 // =============================================================================
@@ -1025,8 +1027,8 @@ function gameLoop(timestamp) {
     const p = players[pseudo];
     const pos = p.body.translation();
 
-    // Mire qui tourne automatiquement
-    p.mireAngle += 4.5 * dt;
+    // Mire qui tourne automatiquement (vitesse réduite)
+    p.mireAngle += 2.2 * dt;
 
     if (p.stunned) {
       p.stunTimer -= dt;
@@ -1128,6 +1130,7 @@ function updateFrisbee(dt) {
   if (!frisbee) return;
 
   if (frisbeeOwner) {
+    frisbeeIdleTimer = 0; // Le frisbee est touché
     const p = players[frisbeeOwner];
     if (p) {
       const pos = p.body.translation();
@@ -1160,6 +1163,14 @@ function updateFrisbee(dt) {
     } else {
       // Une fois lancée, elle tourne en fonction de sa vitesse et s'arrête en fin de course
       frisbee.mesh.rotation.y -= dt * speed * 0.6; // On tourne dans le sens du lancer (ou inverse selon rendu)
+    }
+
+    // Retour au spawn si inactif pdt 5 sec
+    frisbeeIdleTimer += dt;
+    if (frisbeeIdleTimer >= 5) {
+      resetFrisbee();
+      broadcast({ type: 'frisbeeDropped' });
+      return;
     }
 
     // ── Détection collision frisbee ↔ joueurs ──

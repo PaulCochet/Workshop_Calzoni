@@ -952,6 +952,21 @@ function showEndScreen() {
   listA.innerHTML = playersA.map(renderRow).join('') || '<div class="end-empty">Aucun joueur</div>';
   listB.innerHTML = playersB.map(renderRow).join('') || '<div class="end-empty">Aucun joueur</div>';
 
+  const renderCamSlot = (p) => {
+    return `
+      <div id="end-cam-slot-${p.pseudo}" class="end-cam-slot">
+        <div class="end-cam-placeholder">Caméra<br>indisponible</div>
+        <video id="end-cam-vid-${p.pseudo}" class="end-cam-video" autoplay playsinline muted></video>
+        <div class="end-cam-pseudo">${escapeHtml(p.pseudo)}</div>
+      </div>
+    `;
+  };
+
+  const camsA = document.getElementById('end-cams-a');
+  const camsB = document.getElementById('end-cams-b');
+  if (camsA) camsA.innerHTML = playersA.map(renderCamSlot).join('');
+  if (camsB) camsB.innerHTML = playersB.map(renderCamSlot).join('');
+
   if (headerA) headerA.textContent = `MARGHERITA (${scoreA})`;
   if (headerB) headerB.textContent = `FROMAGIO (${scoreB})`;
 
@@ -1442,30 +1457,47 @@ function initPeer() {
     call.answer();
 
     const team = call.metadata ? call.metadata.team : 'A';
+    const isEndScreen = call.metadata ? call.metadata.endScreen : false;
+    const pseudo = call.metadata ? call.metadata.pseudo : null;
     const borderColor = team === 'A' ? '#e74c3c' : '#3498db';
 
     call.on('stream', (remoteStream) => {
-      const pipContainer = document.getElementById('pip-container');
-      const pipVideo = document.getElementById('pip-video');
-      if (pipContainer && pipVideo) {
-        if (pipVideo.srcObject !== remoteStream) {
-          pipVideo.srcObject = remoteStream;
-          pipVideo.onloadedmetadata = () => {
-            pipVideo.play().catch(e => console.error("Erreur lecture vidéo:", e));
-          };
+      if (isEndScreen && pseudo) {
+        const vid = document.getElementById(`end-cam-vid-${pseudo}`);
+        const slot = document.getElementById(`end-cam-slot-${pseudo}`);
+        if (vid && slot) {
+          vid.srcObject = remoteStream;
+          vid.onloadedmetadata = () => { vid.play().catch(e => console.error("Erreur lecture vidéo de fin:", e)); };
+          slot.style.borderColor = borderColor;
         }
-        pipContainer.style.borderColor = borderColor;
-        pipContainer.style.backgroundColor = '#000'; // Fond noir pour cacher la transparence
-        pipContainer.style.display = 'block';
+      } else {
+        const pipContainer = document.getElementById('pip-container');
+        const pipVideo = document.getElementById('pip-video');
+        if (pipContainer && pipVideo) {
+          if (pipVideo.srcObject !== remoteStream) {
+            pipVideo.srcObject = remoteStream;
+            pipVideo.onloadedmetadata = () => {
+              pipVideo.play().catch(e => console.error("Erreur lecture vidéo:", e));
+            };
+          }
+          pipContainer.style.borderColor = borderColor;
+          pipContainer.style.backgroundColor = '#000'; // Fond noir pour cacher la transparence
+          pipContainer.style.display = 'block';
+        }
       }
     });
 
     call.on('close', () => {
-      const pipContainer = document.getElementById('pip-container');
-      const pipVideo = document.getElementById('pip-video');
-      if (pipContainer && pipVideo) {
-        pipContainer.style.display = 'none';
-        pipVideo.srcObject = null;
+      if (isEndScreen && pseudo) {
+        const vid = document.getElementById(`end-cam-vid-${pseudo}`);
+        if (vid) vid.srcObject = null;
+      } else {
+        const pipContainer = document.getElementById('pip-container');
+        const pipVideo = document.getElementById('pip-video');
+        if (pipContainer && pipVideo) {
+          pipContainer.style.display = 'none';
+          pipVideo.srcObject = null;
+        }
       }
     });
   });

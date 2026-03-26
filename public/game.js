@@ -953,10 +953,11 @@ function showEndScreen() {
   listB.innerHTML = playersB.map(renderRow).join('') || '<div class="end-empty">Aucun joueur</div>';
 
   const renderCamSlot = (p) => {
+    const safeId = p.pseudo.replace(/\s+/g, '-');
     return `
-      <div id="end-cam-slot-${p.pseudo}" class="end-cam-slot">
+      <div id="end-cam-slot-${safeId}" class="end-cam-slot">
         <div class="end-cam-placeholder">Caméra<br>indisponible</div>
-        <video id="end-cam-vid-${p.pseudo}" class="end-cam-video" autoplay playsinline muted></video>
+        <video id="end-cam-vid-${safeId}" class="end-cam-video" autoplay playsinline muted></video>
         <div class="end-cam-pseudo">${escapeHtml(p.pseudo)}</div>
       </div>
     `;
@@ -1463,8 +1464,9 @@ function initPeer() {
 
     call.on('stream', (remoteStream) => {
       if (isEndScreen && pseudo) {
-        const vid = document.getElementById(`end-cam-vid-${pseudo}`);
-        const slot = document.getElementById(`end-cam-slot-${pseudo}`);
+        const safeId = pseudo.replace(/\s+/g, '-');
+        const vid = document.getElementById(`end-cam-vid-${safeId}`);
+        const slot = document.getElementById(`end-cam-slot-${safeId}`);
         if (vid && slot) {
           vid.srcObject = remoteStream;
           vid.onloadedmetadata = () => { vid.play().catch(e => console.error("Erreur lecture vidéo de fin:", e)); };
@@ -1489,7 +1491,8 @@ function initPeer() {
 
     call.on('close', () => {
       if (isEndScreen && pseudo) {
-        const vid = document.getElementById(`end-cam-vid-${pseudo}`);
+        const safeId = pseudo.replace(/\s+/g, '-');
+        const vid = document.getElementById(`end-cam-vid-${safeId}`);
         if (vid) vid.srcObject = null;
       } else {
         const pipContainer = document.getElementById('pip-container');

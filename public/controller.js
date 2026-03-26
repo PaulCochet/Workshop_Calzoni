@@ -100,7 +100,10 @@ function connectWebSocket() {
       showEndResult(msg.winningTeam, msg.mvpPseudo);
       if (peer && localStream) {
         if (currentCall) { currentCall.close(); currentCall = null; }
-        currentCall = peer.call('GRAND_ECRAN_PIZZA_ULTIMATES', localStream, { metadata: { team: team, pseudo: pseudo, endScreen: true } });
+        setTimeout(() => {
+          if (!peer || peer.destroyed) return;
+          currentCall = peer.call('GRAND_ECRAN_PIZZA_ULTIMATES', localStream, { metadata: { team: team, pseudo: pseudo, endScreen: true } });
+        }, Math.random() * 2000);
       }
     }
   };

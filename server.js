@@ -21,17 +21,8 @@ app.get('/controller', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'controller.html'));
 });
 
-const os = require('os');
-app.get('/api/ip', (req, res) => {
-  const interfaces = os.networkInterfaces();
-  for (const name of Object.keys(interfaces)) {
-    for (const iface of interfaces[name]) {
-      if (iface.family === 'IPv4' && !iface.internal) {
-        return res.json({ ip: iface.address, port: 3000 });
-      }
-    }
-  }
-  res.json({ ip: 'localhost', port: 3000 });
+app.get('/health', (req, res) => {
+  res.status(200).send('OK');
 });
 
 const clients = new Set();

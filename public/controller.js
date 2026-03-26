@@ -82,7 +82,9 @@ function connectWebSocket() {
       if (currentCall) { currentCall.close(); currentCall = null; }
     }
     if (msg.type === 'stunned' && msg.pseudo === pseudo) {
-      isStunned = true; hasFrisbee = false; updateActionButtons(); showStunFeedback();
+      isStunned = true; hasFrisbee = false; isGrabbed = false; 
+      updateActionButtons(); showStunFeedback();
+      document.getElementById('grab-feedback').style.display = 'none';
       if (currentCall) { currentCall.close(); currentCall = null; }
     }
     if (msg.type === 'recovered' && msg.pseudo === pseudo) {

@@ -1479,6 +1479,7 @@ function initPeer() {
         }
       } else {
         const pipContainer = document.getElementById('pip-container');
+        const pipVideoWrapper = document.getElementById('pip-video-wrapper');
         const pipVideo = document.getElementById('pip-video');
         if (pipContainer && pipVideo) {
           if (pipVideo.srcObject !== remoteStream) {
@@ -1487,9 +1488,11 @@ function initPeer() {
               pipVideo.play().catch(e => console.error("Erreur lecture vidéo:", e));
             };
           }
-          pipContainer.style.borderColor = borderColor;
-          pipContainer.style.backgroundColor = '#000'; // Fond noir pour cacher la transparence
-          pipContainer.style.display = 'block';
+          if (pipVideoWrapper) {
+            pipVideoWrapper.style.borderColor = borderColor;
+            pipVideoWrapper.style.backgroundColor = '#000';
+          }
+          pipContainer.style.display = 'flex';
         }
       }
     });

@@ -104,10 +104,10 @@ function showEndResult(winningTeam, mvpPseudo) {
 
   // Déterminer Gagner/Perdre
   const won = (team === winningTeam);
-  
+
   screenEnd.style.display = 'flex';
   screenEnd.classList.remove('win-bg', 'loss-bg', 'tie-bg');
-  
+
   if (winningTeam === 'tie') {
     resultText.textContent = "Égalité !";
     screenEnd.classList.add('tie-bg');

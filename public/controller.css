@@ -615,21 +615,32 @@ input[type="text"]::placeholder {
 
 #end-result-banner {
   background: #fff;
-  width: 85%;
-  max-width: 600px;
-  padding: 2.5rem 1rem;
+  flex: 1;
+  max-width: 500px;
+  padding: 1.25rem 1rem;
   border-radius: 1.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
 }
 
 #end-result-text {
-  font-size: 4rem;
+  font-size: 3rem;
   color: #181a00;
   margin-bottom: 0;
   letter-spacing: -0.04em;
+}
+
+.end-layout-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  width: 95%;
+  max-width: 650px;
+  z-index: 1;
 }
 
 /* ── ÉCRAN CHARGEMENT MANETTE ── */
@@ -678,18 +689,34 @@ input[type="text"]::placeholder {
 #loading-bar-fill-controller {
   width: 0%;
   height: 100%;
-  background: var(--black);
+  background: var(--yellow);
   transition: width 0.1s linear;
 }
 
 /* ── BOUTON RELANCER (FIN DE PARTIE) ── */
-#restart-game-btn-end {
-  display: none;
-  /* Affiché via JS */
+.btn-restart {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 5.5rem;
+  height: 5.5rem;
+  padding: 0;
+  background: var(--yellow);
+  border: 0.45rem solid var(--black);
+  border-radius: 1.8rem;
+  box-shadow: 0 0.6rem 0 var(--black);
+  cursor: pointer;
+  transition: transform 0.08s, box-shadow 0.08s;
+  flex-shrink: 0;
   z-index: 1001;
 }
 
-#restart-game-btn-end:active {
-  transform: translateY(0.25rem);
-  box-shadow: 0 0.15rem 0 0.5rem var(--shadows);
+.btn-restart img {
+  width: 3.5rem;
+  height: 3.5rem;
+}
+
+.btn-restart:active {
+  transform: translateY(0.3rem);
+  box-shadow: 0 0.2rem 0 var(--black);
 }

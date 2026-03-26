@@ -95,6 +95,7 @@
     <!-- Code QR pour rejoindre, déplacé dans le coin du lobby -->
     <div id="lobby-qr-container">
       <div id="lobby-qr-code"></div>
+      <p style="color: #fff; font-size: 12px; margin-top: 10px; font-family: 'Boldonse', sans-serif;">Utilisez le lien <b>HTTPS</b> (ex: Localtunnel) pour la caméra !</p>
     </div>
   </div>
 
@@ -174,7 +175,13 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
 
+  <!-- PiP Container (affiché quand un joueur tient la pizza) -->
+  <div id="pip-container" style="display: none; position: absolute; bottom: 30px; left: 30px; z-index: 1000; width: 180px; height: 180px; border-radius: 50%; border: 6px solid #fff; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.5);">
+    <video id="pip-video" autoplay playsinline muted style="width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1);"></video>
+  </div>
+
   <!-- Jeu : ES module (Three.js + Rapier via import) -->
+  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
   <script type="module" src="game.js"></script>
 
 </body>

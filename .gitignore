@@ -1,5 +1,13 @@
 node_modules/
 .DS_Store
-public/.DS_Store
-public/Img/.DS_Store
-.DS_Store
+.env
+npm-debug.log
+.gemini/
+.agents/
+.agent/
+_agents/
+_agent/
+brain/
+implementation_plan.md
+task.md
+walkthrough.md

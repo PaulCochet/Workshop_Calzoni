@@ -1,12 +1,17 @@
 // =============================================================================
 //  GAME.JS – Ulti-mates v3 — Three.js + Rapier (remplace p5play)
-//
-//  Architecture :
-//    • Three.js  → rendu 3D (scène, caméra, lumières, meshes)
-//    • Rapier    → physique et collisions (côté grand écran)
-//    • Socket    → relay WebSocket inchangé (server.js intact)
-//    • controller.js → intact, aucun changement
 // =============================================================================
+
+window.addEventListener('error', (event) => {
+  console.error("ERREUR GLOBALE JS:", event.message, "à", event.filename, ":", event.lineno);
+  const statusEl = document.getElementById('connection-status');
+  if (statusEl) {
+    statusEl.textContent = "ERREUR CHARGEMENT : " + event.message;
+    statusEl.className = 'error';
+    statusEl.style.background = '#c0392b';
+    statusEl.style.display = 'block';
+  }
+});
 
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.150.1/build/three.module.js';
 import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.150.1/examples/jsm/loaders/GLTFLoader.js';
@@ -81,7 +86,7 @@ let transitionAnim = null;
 let lastTimestamp = 0;
 
 // Musique de fond
-const bgMusic = new Audio('Musique de fond .m4a');
+const bgMusic = new Audio('MusiqueDeFond.m4a');
 bgMusic.loop = true;
 bgMusic.volume = 0.30;
 
@@ -180,10 +185,18 @@ floor.receiveShadow = true;
 scene.add(floor);
 
 // =============================================================================
-//  RAPIER — INIT (await top-level possible dans un ES module)
+//  RAPIER — INIT
 // =============================================================================
-await RAPIER.init();
-const world = new RAPIER.World({ x: 0, y: -25, z: 0 });
+let world = null;
+try {
+  console.log("Initialisation de RAPIER...");
+  await RAPIER.init();
+  world = new RAPIER.World({ x: 0, y: -25, z: 0 });
+  console.log("RAPIER prêt !");
+} catch (e) {
+  console.error("ERREUR FATALE RAPIER:", e);
+  throw new Error("Impossible d'initialiser le moteur physique (Rapier).");
+}
 
 // =============================================================================
 //  CHARGEMENT DE LA MAP GLB
@@ -616,6 +629,8 @@ function handleThrow(msg) {
   }
 
   broadcast({ type: 'frisbeeDropped' });
+  const pipContainer = document.getElementById('pip-container');
+  if (pipContainer) pipContainer.style.display = 'none';
 }
 
 function handleGrab(msg) {
@@ -656,6 +671,8 @@ function handleGrab(msg) {
     if (frisbeeOwner === closest) {
       frisbeeOwner = null;
       broadcast({ type: 'frisbeeDropped' });
+      const pipContainer = document.getElementById('pip-container');
+      if (pipContainer) pipContainer.style.display = 'none';
     }
     broadcast({ type: 'grabbed', pseudo: closest, by: msg.pseudo });
   }
@@ -818,6 +835,8 @@ function stunPlayer(pseudo, throwerPseudo = null) {
   if (frisbeeOwner === pseudo) {
     frisbeeOwner = null;
     broadcast({ type: 'frisbeeDropped' });
+    const pipContainer = document.getElementById('pip-container');
+    if (pipContainer) pipContainer.style.display = 'none';
   }
   broadcast({ type: 'stunned', pseudo });
   updateScoreboard();
@@ -915,6 +934,8 @@ function showEndScreen() {
   });
 
   overlay.style.display = 'flex';
+  const pipContainer = document.getElementById('pip-container');
+  if (pipContainer) pipContainer.style.display = 'none';
 }
 
 function handleRestart() {
@@ -927,6 +948,8 @@ function handleRestart() {
   resetFrisbee();
   updateLobbyUI();
   broadcast({ type: 'returnToLobby' });
+  const pipContainer = document.getElementById('pip-container');
+  if (pipContainer) pipContainer.style.display = 'none';
   // Arrêter la musique
   bgMusic.pause();
   bgMusic.currentTime = 0;
@@ -1257,6 +1280,8 @@ function updateFrisbee(dt) {
     if (frisbeeIdleTimer >= 5) {
       resetFrisbee();
       broadcast({ type: 'frisbeeDropped' });
+      const pipContainer = document.getElementById('pip-container');
+      if (pipContainer) pipContainer.style.display = 'none';
       return;
     }
 
@@ -1323,15 +1348,88 @@ document.getElementById('lobby-overlay').style.display = 'flex';
 document.getElementById('hud').style.display = 'none';
 document.getElementById('end-overlay').style.display = 'none';
 
-// QR code lobby
-fetch('/api/ip')
-  .then(r => r.json())
-  .then(data => {
-    const url = `http://${data.ip}:${data.port}/controller`;
-    // document.getElementById('lobby-url-text').textContent = url; // Supprimé car n'existe plus dans HTML
-    generateQR(document.getElementById('lobby-qr-code'), url, 200);
-  })
-  .catch(console.error);
+// QR code lobby (Auto-détection de l'URL pour Railway/Local)
+const lobbyQrEl = document.getElementById('lobby-qr-code');
+if (lobbyQrEl) {
+  const protocol = window.location.protocol;
+  const host = window.location.host;
+  const url = `${protocol}//${host}/controller`;
+  console.log("QR Code généré pour :", url);
+  generateQR(lobbyQrEl, url, 200);
+}
+
+// Permettre de cliquer sur le QR Code pour le mettre à jour avec Localtunnel
+if (lobbyQrEl) {
+  lobbyQrEl.style.cursor = 'pointer';
+  lobbyQrEl.title = "Cliquez pour changer l'URL (Localtunnel)";
+  lobbyQrEl.addEventListener('click', () => {
+    const newUrl = prompt("Entrez votre URL Localtunnel (HTTPS) pour la caméra :", "https://xyz.loca.lt/controller");
+    if (newUrl && newUrl.includes('https://')) {
+      generateQR(lobbyQrEl, newUrl, 200);
+      alert("QR Code mis à jour avec le lien sécurisé !");
+    }
+  });
+}
+
+// =============================================================================
+//  WebRTC Picture-in-Picture (PiP)
+// =============================================================================
+let peer = null;
+
+function initPeer() {
+  console.log('Jeu : Init PeerJS sur le CLOUD');
+
+  // Utilise le cloud PeerJS (0.peerjs.com) par défaut pour plus de fiabilité
+  peer = new Peer('GRAND_ECRAN_PIZZA_ULTIMATES'); 
+
+  peer.on('open', id => {
+    console.log('PeerJS (Game) ouvert sur le Cloud avec ID:', id);
+  });
+
+  peer.on('open', id => {
+    console.log('PeerJS (Game) ouvert avec ID:', id);
+    // Optionnel : afficher à l'écran pour débug
+  });
+
+  peer.on('error', err => {
+    console.error('PeerJS Erreur (Game):', err);
+    // On tente de réinitialiser si c'est une erreur fatale
+  });
+
+  peer.on('call', (call) => {
+    call.answer();
+
+    const team = call.metadata ? call.metadata.team : 'A';
+    const borderColor = team === 'A' ? '#e74c3c' : '#3498db';
+
+    call.on('stream', (remoteStream) => {
+      const pipContainer = document.getElementById('pip-container');
+      const pipVideo = document.getElementById('pip-video');
+      if (pipContainer && pipVideo) {
+        if (pipVideo.srcObject !== remoteStream) {
+          pipVideo.srcObject = remoteStream;
+          pipVideo.onloadedmetadata = () => {
+            pipVideo.play().catch(e => console.error("Erreur lecture vidéo:", e));
+          };
+        }
+        pipContainer.style.borderColor = borderColor;
+        pipContainer.style.backgroundColor = '#000'; // Fond noir pour cacher la transparence
+        pipContainer.style.display = 'block';
+      }
+    });
+
+    call.on('close', () => {
+      const pipContainer = document.getElementById('pip-container');
+      const pipVideo = document.getElementById('pip-video');
+      if (pipContainer && pipVideo) {
+        pipContainer.style.display = 'none';
+        pipVideo.srcObject = null;
+      }
+    });
+  });
+}
+
+initPeer();
 
 // Initialisation Lottie
 if (typeof lottie !== 'undefined') {

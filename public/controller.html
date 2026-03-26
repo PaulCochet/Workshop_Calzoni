@@ -133,6 +133,10 @@
     </div>
   </div>
 
+  <!-- Vidéo locale cachée pour forcer le flux à rester actif sur mobile (surtout iOS) -->
+  <video id="dummy-local-video" autoplay playsinline muted style="display: none;"></video>
+
+  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
   <script src="controller.js"></script>
 </body>
 

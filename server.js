@@ -77,11 +77,9 @@ wss.on('connection', (ws) => {
   });
 });
 
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log('─────────────────────────────────────────');
-  console.log(`Ulti-mates démarré sur http://localhost:${PORT}`);
-  console.log(`Jeu (grand écran) : http://localhost:${PORT}/`);
-  console.log(`Manette           : http://localhost:${PORT}/controller`);
-  console.log('─────────────────────────────────────────');
+  console.log(`─────────────────────────────────────────`);
+  console.log(`Ulti-mates démarré sur le port : ${PORT}`);
+  console.log(`─────────────────────────────────────────`);
 });

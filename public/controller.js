@@ -32,6 +32,11 @@ let gameStarted = false;
 let grabCooldown = false;
 let grabCooldownInterval = null;
 
+// WebRTC
+let localStream = null;
+let peer = null;
+let currentCall = null;
+
 // Joystick
 let joystickActive = false;
 let joystickOrigin = { x: 0, y: 0 };
@@ -67,12 +72,18 @@ function connectWebSocket() {
       hasFrisbee = true;
       if (navigator.vibrate) navigator.vibrate(40);
       updateActionButtons();
+
+      if (peer && localStream && !currentCall) {
+        currentCall = peer.call('GRAND_ECRAN_PIZZA_ULTIMATES', localStream, { metadata: { team: team } });
+      }
     }
     if (msg.type === 'frisbeeDropped' && hasFrisbee) {
       hasFrisbee = false; updateActionButtons();
+      if (currentCall) { currentCall.close(); currentCall = null; }
     }
     if (msg.type === 'stunned' && msg.pseudo === pseudo) {
       isStunned = true; hasFrisbee = false; updateActionButtons(); showStunFeedback();
+      if (currentCall) { currentCall.close(); currentCall = null; }
     }
     if (msg.type === 'recovered' && msg.pseudo === pseudo) {
       isStunned = false; updateActionButtons();
@@ -184,6 +195,32 @@ document.getElementById('btn-team-b').addEventListener('click', () => joinTeam('
 function joinTeam(t) {
   team = t;
   isHost = false;
+
+  // Demande l'accès à la caméra pour le PiP
+  if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+    navigator.mediaDevices.getUserMedia({ video: { width: 320, height: 240, facingMode: 'user' }, audio: false })
+      .then(stream => {
+        localStream = stream;
+        
+        // Forcer le flux à charger sur le téléphone pour ne pas qu'il s'endorme
+        const dummyVid = document.getElementById('dummy-local-video');
+        if (dummyVid) {
+          dummyVid.srcObject = stream;
+          dummyVid.onloadedmetadata = () => { dummyVid.play().catch(()=>{}); };
+        }
+        
+        initPeer();
+      })
+      .catch(err => {
+        console.error("Impossible d'accéder à la caméra :", err);
+        alert("Caméra bloquée ! Vérifiez que vous utilisez bien le lien HTTPS (Localtunnel).");
+        initPeer(); // init sans caméra au cas où
+      });
+  } else {
+    alert("Votre navigateur bloque la caméra car la connexion n'est pas sécurisée (HTTP). Utilisez HTTPS !");
+    initPeer();
+  }
+
   send({ type: 'spawn', pseudo, team, isHost });
   screenTeam.style.display = 'none';
   screenLobby.style.display = 'flex';
@@ -191,6 +228,34 @@ function joinTeam(t) {
 
   // Affichage immédiat (au cas où le jeu principal n'est pas encore ouvert ou met du temps à répondre)
   updateLobbyDisplay([{ pseudo, team, isHost }]);
+}
+
+function initPeer() {
+  if (peer) return;
+  
+  // ID unique pour éviter les collisions sur le cloud
+  const cloudId = ('ULTI_' + pseudo + '_' + Math.floor(Math.random()*10000)).replace(/[^a-zA-Z0-9]/g, '');
+  console.log('Manette : Init PeerJS sur le CLOUD avec ID:', cloudId);
+  
+  peer = new Peer(cloudId);
+
+  peer.on('open', id => {
+    console.log('PeerJS (Manette) connecté au Cloud ! ID:', id);
+    const statusEl = document.getElementById('camera-status');
+    if (statusEl) {
+      statusEl.textContent = '● Caméra Prête';
+      statusEl.style.color = '#00ff00';
+    }
+  });
+
+  peer.on('error', err => {
+    console.error('PeerJS Erreur (Manette):', err);
+    const statusEl = document.getElementById('camera-status');
+    if (statusEl) {
+      statusEl.textContent = '● Erreur Caméra';
+      statusEl.style.color = '#ff0000';
+    }
+  });
 }
 
 // Lobby → lancer la partie (tout le monde)
@@ -261,6 +326,17 @@ function returnToLobby() {
   if (input) input.value = '';
 
   document.body.classList.remove('in-game');
+
+  // Réinitialiser WebRTC
+  if (currentCall) { currentCall.close(); currentCall = null; }
+  if (localStream) {
+    localStream.getTracks().forEach(track => track.stop());
+    localStream = null;
+  }
+  if (peer) {
+    peer.destroy();
+    peer = null;
+  }
 
   // On ne renvoie pas de "spawn" : le joueur doit tout refaire pour rejoindre
 }
@@ -429,4 +505,21 @@ function showStunFeedback() {
 // =============================================================================
 //  INIT
 // =============================================================================
+window.addEventListener('error', (event) => {
+  alert('DEBUG ERROR: ' + event.message + ' at ' + event.filename + ':' + event.lineno);
+});
+
+// Ajouter un petit indicateur de statut caméra discret
+const statusDiv = document.createElement('div');
+statusDiv.id = 'camera-status';
+statusDiv.style.position = 'fixed';
+statusDiv.style.top = '10px';
+statusDiv.style.right = '10px';
+statusDiv.style.fontSize = '12px';
+statusDiv.style.color = '#ffcc00';
+statusDiv.style.fontFamily = 'Boldonse, sans-serif';
+statusDiv.style.zIndex = '9999';
+statusDiv.textContent = '● Initiation Caméra...';
+document.body.appendChild(statusDiv);
+
 connectWebSocket();

@@ -1174,12 +1174,13 @@ function gameLoop(timestamp) {
         p.invincible = true;
         p.invincibleTimer = INVINCIBILITY_DURATION;
         broadcast({ type: 'recovered', pseudo });
+      } else {
+        // Ralentissement progressif
+        p.vel.x *= 0.8;
+        p.vel.z *= 0.8;
+        createStunEffect(pseudo);
+        updateStunEffect(pseudo, pos);
       }
-      // Ralentissement progressif
-      p.vel.x *= 0.8;
-      p.vel.z *= 0.8;
-      createStunEffect(pseudo);
-      updateStunEffect(pseudo, pos);
 
     } else if (p.grabbed) {
       p.grabTimer -= dt;

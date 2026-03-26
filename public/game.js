@@ -86,11 +86,11 @@ bgMusic.loop = true;
 bgMusic.volume = 0.30;
 
 const throwSFX = new Audio('ThrowSFX.mp3');
-throwSFX.volume = 0.35;
+throwSFX.volume = 0.20;
 throwSFX.preload = 'auto';
 
 const hitSFX = new Audio('HitSFX.mp3');
-hitSFX.volume = 0.6;
+hitSFX.volume = 0.9;
 hitSFX.preload = 'auto';
 
 // Débloquer l'audio via Bouton (Anti-Autoplay des navigateurs)
@@ -612,7 +612,7 @@ function handleThrow(msg) {
 
   if (audioUnlocked) {
     throwSFX.currentTime = 0;
-    throwSFX.play().catch(() => {});
+    throwSFX.play().catch(() => { });
   }
 
   broadcast({ type: 'frisbeeDropped' });
@@ -795,10 +795,10 @@ function stunPlayer(pseudo, throwerPseudo = null) {
   p.grabbed = false;
   // Squash immédiat au stun
   p.mesh.scale.set(1.5, 0.5, 1.5);
-  
+
   if (audioUnlocked) {
     hitSFX.currentTime = 0;
-    hitSFX.play().catch(() => {});
+    hitSFX.play().catch(() => { });
   }
 
   if (p.team === 'A') {

@@ -80,6 +80,40 @@ let pointAnim = null;
 let transitionAnim = null;
 let lastTimestamp = 0;
 
+// Musique de fond
+const bgMusic = new Audio('Musique de fond .m4a');
+bgMusic.loop = true;
+bgMusic.volume = 0.30;
+
+// Débloquer l'audio via Bouton (Anti-Autoplay des navigateurs)
+let audioUnlocked = false;
+let musicWanted = false; // Le joueur a activé la musique ?
+
+const musicBtn = document.getElementById('music-toggle-btn');
+if (musicBtn) {
+  musicBtn.addEventListener('click', () => {
+    if (!audioUnlocked) {
+      // Débloquer le contexte au premier clic
+      bgMusic.play().then(() => {
+        bgMusic.pause();
+        bgMusic.currentTime = 0;
+        audioUnlocked = true;
+        toggleMusicState();
+      }).catch(() => { });
+    } else {
+      toggleMusicState();
+    }
+  });
+}
+
+function toggleMusicState() {
+  musicWanted = !musicWanted;
+  if (musicBtn) {
+    musicBtn.textContent = musicWanted ? "Musique : ON" : "Musique : OFF";
+    musicBtn.style.background = musicWanted ? "#27ae60" : "var(--black)";
+  }
+}
+
 let ws;
 
 // =============================================================================
@@ -711,6 +745,12 @@ function completeStartSequence() {
   resetFrisbee();
   broadcast({ type: 'gameStarted' });
   updateScoreboard();
+
+  // Lancer la musique de fond uniquement si activée
+  if (audioUnlocked && musicWanted) {
+    bgMusic.currentTime = 0;
+    bgMusic.play().catch(() => { });
+  }
 }
 
 function triggerPointAnimation(pseudo) {
@@ -869,6 +909,9 @@ function handleRestart() {
   resetFrisbee();
   updateLobbyUI();
   broadcast({ type: 'returnToLobby' });
+  // Arrêter la musique
+  bgMusic.pause();
+  bgMusic.currentTime = 0;
 }
 
 // =============================================================================

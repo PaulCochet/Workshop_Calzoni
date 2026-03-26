@@ -12,6 +12,11 @@ app.set('trust proxy', 1); // Indispensable pour Railway/Proxies
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
 
+// Health check AVANT tout le reste — Railway/Proxies pinguent cette route
+app.get('/health', (req, res) => {
+  res.status(200).send('OK');
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/', (req, res) => {
@@ -20,10 +25,6 @@ app.get('/', (req, res) => {
 
 app.get('/controller', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'controller.html'));
-});
-
-app.get('/health', (req, res) => {
-  res.status(200).send('OK');
 });
 
 const clients = new Set();

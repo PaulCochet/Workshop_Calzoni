@@ -1209,7 +1209,7 @@ function updateFrisbee(dt) {
 
       if (dist < 1.5) {
         // Frisbee lancé par un ennemi → stun
-        if (spd > 3.5 && frisbeeLastThrower && frisbeeLastThrower !== pseudo && !p.invincible) {
+        if (spd > 3.2 && frisbeeLastThrower && frisbeeLastThrower !== pseudo && !p.invincible) {
           const thrower = players[frisbeeLastThrower];
           if (thrower && thrower.team !== p.team) {
             stunPlayer(pseudo, frisbeeLastThrower);

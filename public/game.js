@@ -86,10 +86,12 @@ bgMusic.loop = true;
 bgMusic.volume = 0.30;
 
 const throwSFX = new Audio('ThrowSFX.mp3');
-throwSFX.volume = 0.5;
+throwSFX.volume = 0.35;
+throwSFX.preload = 'auto';
 
 const hitSFX = new Audio('HitSFX.mp3');
 hitSFX.volume = 0.6;
+hitSFX.preload = 'auto';
 
 // Débloquer l'audio via Bouton (Anti-Autoplay des navigateurs)
 let audioUnlocked = false;

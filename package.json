@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Jeu multijoueur top-down – workshop UI/UX 2026",
   "main": "server.js",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
     "start": "node server.js"
   },

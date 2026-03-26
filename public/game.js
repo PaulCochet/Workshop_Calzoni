@@ -88,15 +88,43 @@ let lastTimestamp = 0;
 // Musique de fond
 const bgMusic = new Audio('MusiqueDeFond.m4a');
 bgMusic.loop = true;
-bgMusic.volume = 0.30;
+bgMusic.volume = 0.15;
 
 const throwSFX = new Audio('ThrowSFX.mp3');
-throwSFX.volume = 0.20;
+throwSFX.volume = 0.10;
 throwSFX.preload = 'auto';
 
 const hitSFX = new Audio('HitSFX.mp3');
-hitSFX.volume = 0.9;
+hitSFX.volume = 0.8;
 hitSFX.preload = 'auto';
+
+// =============================================================================
+//  Web Audio API (Footsteps)
+// =============================================================================
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+let footstepBuffer = null;
+
+fetch('footstep.mp3')
+  .then(r => r.arrayBuffer())
+  .then(data => audioCtx.decodeAudioData(data))
+  .then(buffer => { footstepBuffer = buffer; })
+  .catch(console.error);
+
+function playFootstep(volume = 1.3) {
+  if (!footstepBuffer) return;
+  const source = audioCtx.createBufferSource();
+  source.buffer = footstepBuffer;
+  source.playbackRate.value = 0.9 + Math.random() * 0.25;
+  const gainNode = audioCtx.createGain();
+  gainNode.gain.value = volume * (0.85 + Math.random() * 0.3);
+  source.connect(gainNode);
+  gainNode.connect(audioCtx.destination);
+  source.start();
+}
+
+document.addEventListener('pointerdown', () => {
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+});
 
 // Débloquer l'audio via Bouton (Anti-Autoplay des navigateurs)
 let audioUnlocked = false;
@@ -503,6 +531,7 @@ function spawnPlayer(pseudo, team, isHost) {
     mireAngle: 0,
     points: 0,
     invincible: false, invincibleTimer: 0,
+    stepTimer: 0,
   };
 }
 
@@ -1147,6 +1176,19 @@ function gameLoop(timestamp) {
       const speed = (frisbeeOwner === pseudo) ? PLAYER_SPEED * 0.65 : PLAYER_SPEED;
       p.vel.x = p.inputDir.x * speed;
       p.vel.z = p.inputDir.z * speed;
+    }
+
+    const spdPlay = Math.hypot(p.vel.x, p.vel.z);
+    const isMoving = spdPlay > 0.8 && !p.stunned && !p.grabbed;
+    if (isMoving) {
+      const stepInterval = 0.37 - (spdPlay / PLAYER_SPEED) * 0.12;
+      p.stepTimer -= dt;
+      if (p.stepTimer <= 0) {
+        playFootstep(1.3);
+        p.stepTimer = stepInterval;
+      }
+    } else {
+      p.stepTimer = 0;
     }
 
     // Timer d'invincibilité
